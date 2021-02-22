@@ -16,7 +16,8 @@ extern "C" {
 #endif
 
 #define TFM_TIMER0_IRQ    (TMR0_IRQn)
-#define TFM_TIMER1_IRQ    (TMR1_IRQn)
+/* Implement TF-M TIMER1 (virtual) with M2354 TIMER2 (real) */
+#define TFM_TIMER1_IRQ    (TMR2_IRQn)
 
 struct platform_data_t;
 
