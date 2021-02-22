@@ -132,8 +132,19 @@ enum tfm_plat_err_t system_reset_cfg(void)
     /* Clear SCB_AIRCR_VECTKEY value */
     reg_value &= ~(uint32_t)(SCB_AIRCR_VECTKEY_Msk);
 
+#if 0
     /* Enable system reset request for the secure world only */
     reg_value |= (uint32_t)(SCB_AIRCR_WRITE_MASK | SCB_AIRCR_SYSRESETREQS_Msk);
+#else
+    /* Honor SCB_AIRCR_SYSRESETREQS_VAL
+     *
+     * NOTE: To enable debugger reset and Mbed Greentea test reset, SCB_AIRCR_SYSRESETREQS_VAL
+     * must be 0.
+     */
+    reg_value |= SCB_AIRCR_WRITE_MASK;
+    reg_value &= ~SCB_AIRCR_SYSRESETREQS_Msk;
+    reg_value |= (SCB_AIRCR_SYSRESETREQS_VAL << SCB_AIRCR_SYSRESETREQS_Pos);
+#endif
 
     SCB->AIRCR = reg_value;
 
@@ -152,10 +163,13 @@ enum tfm_plat_err_t init_debug(void)
 /*----------------- NVIC interrupt target state to NS configuration ----------*/
 enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 {
+    /* FIXME: also targeting INTs of hard-wired secure RTC/WDT to NS? Remove for clarity */
+#if 0
     /* Target every interrupt to NS; unimplemented interrupts will be WI */
     for (uint8_t i=0; i<sizeof(NVIC->ITNS)/sizeof(NVIC->ITNS[0]); i++) {
         NVIC->ITNS[i] = 0xFFFFFFFF;
     }
+#endif
 
 #ifdef SECURE_UART1
     /* UART1 is a secure peripheral, so its IRQs have to target S state */
