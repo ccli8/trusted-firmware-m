@@ -15,6 +15,8 @@
 #define BTN_WAIT_INIT_COUNTER_VALUE (10000u)
 #define TIMER_RELOAD_VALUE          (12000000)
 
+#ifdef CORE_TEST_INTERACTIVE
+
 void tfm_plat_test_wait_user_button_pressed(void)
 {
     /* Wait until user button 0 is pressed */
@@ -31,6 +33,10 @@ void tfm_plat_test_wait_user_button_released(void)
     }
 }
 
+#endif  /* #ifdef CORE_TEST_INTERACTIVE */
+
+#ifdef TFM_ENABLE_PERIPH_ACCESS_TEST
+
 uint32_t tfm_plat_test_get_led_status(void)
 {
     return PD2;
@@ -45,6 +51,10 @@ uint32_t tfm_plat_test_get_userled_mask(void)
 {
     return USERLED_MASK;
 }
+
+#endif  /* #ifdef TFM_ENABLE_PERIPH_ACCESS_TEST */
+
+#ifdef TFM_ENABLE_IRQ_TEST
 
 void tfm_plat_test_non_secure_timer_start(void)
 {
@@ -63,6 +73,8 @@ void tfm_plat_test_non_secure_timer_stop(void)
     timer_cmsdk_disable_interrupt(&CMSDK_TIMER2_DEV_NS);
     timer_cmsdk_clear_interrupt(&CMSDK_TIMER2_DEV_NS);
 }
+
+#endif  /* #ifdef TFM_ENABLE_IRQ_TEST */
 
 void tfm_plat_test_secure_timer_start(void)
 {

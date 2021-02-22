@@ -55,7 +55,7 @@
 //     <o>Secure Flash ROM Size <0x800-0x80000:0x800>
 */
 
-#define FMC_SECURE_ROM_SIZE      (SECURE_IMAGE_MAX_SIZE+0x10000)
+#define FMC_SECURE_ROM_SIZE      (FLASH_TOTAL_SIZE - FLASH_NS_PARTITION_SIZE)
 
 #define FMC_NON_SECURE_BASE     (0x10000000 + FMC_SECURE_ROM_SIZE)
 
@@ -76,7 +76,7 @@
 //   <o.16>  EBI    <0=> Secure <1=> Non-Secure
 //   <o.24>  PDMA1      <0=> Secure <1=> Non-Secure
 */
-#define SCU_INIT_PNSSET0_VAL      0x0
+#define SCU_INIT_PNSSET0_VAL      0xFFFFFFFF
 /*
     PNSSET1
 */
@@ -85,7 +85,7 @@
 //   <o.17>  CRC       <0=> Secure <1=> Non-Secure
 //   <o.18>  CRPT   <0=> Secure <1=> Non-Secure
 */
-#define SCU_INIT_PNSSET1_VAL      0x00000
+#define SCU_INIT_PNSSET1_VAL      0xFFFFFFFF
 /*
     PNSSET2
 */
@@ -111,7 +111,7 @@
 //   <o.27>  BPWM1      <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_PNSSET2_VAL      0x0
+#define SCU_INIT_PNSSET2_VAL      0xFFFFFFFF
 /*
     PNSSET3
 */
@@ -133,7 +133,11 @@
 //   <o.21>  UART5      <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_PNSSET3_VAL      0x20000
+#ifdef SECURE_UART1
+#define SCU_INIT_PNSSET3_VAL      (0xFFFFFFFF & ~BIT17)
+#else
+#define SCU_INIT_PNSSET3_VAL      0xFFFFFFFF
+#endif
 /*
     PNSSET4
 */
@@ -150,7 +154,7 @@
 //   <o.18>  SC2      <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_PNSSET4_VAL      0x0
+#define SCU_INIT_PNSSET4_VAL      0xFFFFFFFF
 /*
     PNSSET5
 */
@@ -168,7 +172,7 @@
 //   <o.25>  TRNG       <0=> Secure <1=> Non-Secure
 //   <o.27>  LCD        <0=> Secure <1=> Non-Secure
 */
-#define SCU_INIT_PNSSET5_VAL      0x0
+#define SCU_INIT_PNSSET5_VAL      (0xFFFFFFFF & ~BIT25)
 /*
     PNSSET6
 */
@@ -180,7 +184,7 @@
 //   <o.17>  USCI1      <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_PNSSET6_VAL      0x0
+#define SCU_INIT_PNSSET6_VAL      0xFFFFFFFF
 /*
 // </h>
 */
@@ -217,7 +221,7 @@
 //   </h>
 
 */
-#define SCU_INIT_IONSSET0_VAL      0x00000000
+#define SCU_INIT_IONSSET0_VAL      0xFFFFFFFF
 
 /*
 // Bit 0..31
@@ -240,7 +244,7 @@
 //   <o.15>  PB15       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET1_VAL      0x00000000
+#define SCU_INIT_IONSSET1_VAL      0xFFFFFFFF
 
 
 /*
@@ -262,7 +266,7 @@
 //   <o.13>  PC13       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET2_VAL      0x00000003
+#define SCU_INIT_IONSSET2_VAL      0xFFFFFFFF
 
 /*
 // Bit 0..31
@@ -283,7 +287,7 @@
 //   <o.14>  PD14       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET3_VAL      0x00000000
+#define SCU_INIT_IONSSET3_VAL      0xFFFFFFFF
 
 
 /*
@@ -307,7 +311,7 @@
 //   <o.15>  PE15       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET4_VAL      0x00000000
+#define SCU_INIT_IONSSET4_VAL      0xFFFFFFFF
 
 
 /*
@@ -327,7 +331,7 @@
 //   <o.11>  PF11       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET5_VAL      0x00000000
+#define SCU_INIT_IONSSET5_VAL      0xFFFFFFFF
 
 
 /*
@@ -345,7 +349,7 @@
 //   <o.15>  PG15       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET6_VAL      0x00000000
+#define SCU_INIT_IONSSET6_VAL      0xFFFFFFFF
 
 /*
 // Bit 0..31
@@ -360,7 +364,7 @@
 //   <o.11>  PH11       <0=> Secure <1=> Non-Secure
 //   </h>
 */
-#define SCU_INIT_IONSSET7_VAL      0x00000000
+#define SCU_INIT_IONSSET7_VAL      0xFFFFFFFF
 
 /*
 // </h>
@@ -396,7 +400,7 @@
 //   <o.14>  EINT6         <0=> Secure <1=> Non-Secure
 //   <o.15>  EINT7         <0=> Secure <1=> Non-Secure
 */
-#define SCU_INIT_IONSSET_VAL      0x0000
+#define SCU_INIT_IONSSET_VAL      0xFFFFFFFF
 /*
 // </h>
 */
@@ -679,7 +683,6 @@
     SAU->RBAR =  (SAU_INIT_START##n                     & SAU_RBAR_BADDR_Msk); \
     SAU->RLAR =  (SAU_INIT_END##n                       & SAU_RLAR_LADDR_Msk) | \
                 ((SAU_INIT_NSC##n << SAU_RLAR_NSC_Pos)  & SAU_RLAR_NSC_Msk)   | 1U
-
 
 #endif  /* PARTITION_M2354 */
 
