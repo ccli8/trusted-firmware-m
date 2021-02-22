@@ -51,6 +51,8 @@ endif()
 if(BL2)
     target_sources(bl2
         PRIVATE
+            bsp/Library/StdDriver/src/sys.c
+            bsp/Library/StdDriver/src/clk.c
             $<$<C_COMPILER_ID:ARMClang>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/armclang/startup_cmsdk_m2354_bl2.s>
             $<$<C_COMPILER_ID:GNU>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/gcc/startup_cmsdk_m2354_bl2.S>
             $<$<C_COMPILER_ID:IAR>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/iar/startup_cmsdk_m2354_bl2.s>
@@ -94,6 +96,9 @@ target_sources(platform_s
         bsp/Library/StdDriver/src/timer.c
         bsp/Library/StdDriver/src/fmc.c
         bsp/Library/StdDriver/src/tamper.c
+        bsp/Library/StdDriver/src/sys.c
+        bsp/Library/StdDriver/src/clk.c
+        bsp/Library/StdDriver/src/rtc.c
         ../common/services/src/tfm_platform_system.c
         target_cfg.c
         ../common/spm_hal.c
@@ -104,6 +109,8 @@ target_sources(platform_s
         ${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
         ${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
         $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/plat_test.c>
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/services/src/platform_extra_secure.c>
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/services/src/platform_extra_secure_guard.c>
 )
 
 target_compile_options(platform_s
@@ -111,14 +118,24 @@ target_compile_options(platform_s
         ${COMPILER_CMSE_FLAG}
 )
 
+target_compile_definitions(platform_s
+    PUBLIC
+        NU_TFM_PLAT_IOCTL_S=1
+)
+
 #========================= Platform Non-Secure ================================#
 
 target_sources(platform_ns
     PRIVATE
         ../common/native_drivers/arm_uart_drv.c
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/native_drivers/timer_cmsdk_drv.c>
         ../common/cmsis_drivers/Driver_USART.c
         device/source/device_definition.c
         device/source/system_core_init.c
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/plat_test.c>
+        $<$<BOOL:${TFM_IRQ_TEST}>:${CMAKE_CURRENT_SOURCE_DIR}/bsp/Library/StdDriver/src/timer.c>
+        ../common/services/src/platform_extra_secure.c
+        ../common/services/src/platform_extra_secure_compat.c
 )
 
 target_include_directories(platform_ns
@@ -135,6 +152,12 @@ target_include_directories(platform_ns
         ../common/bsp/Include
         ../common/bsp/StdDriver/inc
         ../common/cmsis_drivers/config
+        ../common/services/src/
+)
+
+target_compile_definitions(platform_ns
+    PUBLIC
+        NU_TFM_PLAT_IOCTL_NS=1
 )
 
 #========================= Platform BL2 =======================================#
