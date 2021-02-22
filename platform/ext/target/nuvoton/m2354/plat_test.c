@@ -13,6 +13,8 @@
 
 #define TIMER_RELOAD_VALUE          (12000000)
 
+#ifdef TFM_ENABLE_IRQ_TEST
+
 void tfm_plat_test_non_secure_timer_start(void)
 {
     if(!timer_cmsdk_is_initialized(&CMSDK_TIMER2_DEV_NS)) {
@@ -30,6 +32,8 @@ void tfm_plat_test_non_secure_timer_stop(void)
     timer_cmsdk_disable_interrupt(&CMSDK_TIMER2_DEV_NS);
     timer_cmsdk_clear_interrupt(&CMSDK_TIMER2_DEV_NS);
 }
+
+#endif  /* #ifdef TFM_ENABLE_IRQ_TEST */
 
 void tfm_plat_test_secure_timer_start(void)
 {
