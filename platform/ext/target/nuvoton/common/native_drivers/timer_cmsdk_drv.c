@@ -18,6 +18,48 @@
 #include "NuMicro.h"
 #include "timer_cmsdk_drv.h"
 
+/* Enable "-DTFM_IRQ_TEST=ON" (TFM_ENABLE_IRQ_TEST)
+ *
+ * This needs BSP StdDriver timer.c/clk.c for platform_ns build target. Meet issues:
+ * 1. CLK region registers are inaccessible for NSPE
+ * 2. Redefinition error when linking with Mbed OS
+ *
+ * To fix above easily, we hard-code TIMER2 clock source for this test.
+ * Check SystemInit@system_core_init.c for TIMER2 clock configuration.
+ */
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3L)
+
+/* Nothing */
+
+#else
+
+#define TIMER_Open  TIMER_Open_X
+
+static uint32_t TIMER_Open_X(TIMER_T *timer, uint32_t u32Mode, uint32_t u32Freq)
+{
+    uint32_t u32ClkFreq = __HIRC; /* TIMER_GetModuleClock(timer); */
+    uint32_t u32Cmpr = 0UL, u32Prescale = 0UL;
+
+    /* Fastest possible timer working freq is (u32Clk / 2). While cmpr = 2, prescaler = 0. */
+    if(u32Freq > (u32ClkFreq / 2UL))
+    {
+        u32Cmpr = 2UL;
+    }
+    else
+    {
+        u32Cmpr = u32ClkFreq / u32Freq;
+        u32Prescale = (u32Cmpr >> 24);  /* for 24 bits CMPDAT */
+        if(u32Prescale > 0UL)
+            u32Cmpr = u32Cmpr / (u32Prescale + 1UL);
+    }
+
+    timer->CTL = u32Mode | u32Prescale;
+    timer->CMP = u32Cmpr;
+
+    return (u32ClkFreq / (u32Cmpr * (u32Prescale + 1UL)));
+}
+
+#endif
 
 void timer_cmsdk_init(const struct timer_cmsdk_dev_t* dev)
 {

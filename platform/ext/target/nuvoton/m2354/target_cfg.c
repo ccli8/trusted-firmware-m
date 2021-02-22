@@ -95,21 +95,21 @@ extern ARM_DRIVER_MPC Driver_SRAM1_MPC, Driver_SRAM2_MPC;
 #define All_SEL_STATUS (SPNIDEN_SEL_STATUS | SPIDEN_SEL_STATUS | \
                         NIDEN_SEL_STATUS | DBGEN_SEL_STATUS)
 
-struct platform_data_t tfm_peripheral_std_uart = {
+struct tfm_spm_partition_platform_data_t tfm_peripheral_std_uart = {
         UART0_BASE + NS_OFFSET,
         UART0_BASE + NS_OFFSET + 0xFFF,
         PPC_SP_DO_NOT_CONFIGURE,
         -1
 };
 
-struct platform_data_t tfm_peripheral_uart1 = {
+struct tfm_spm_partition_platform_data_t tfm_peripheral_uart1 = {
         UART1_BASE,
         UART1_BASE + 0xFFF,
         PPC_SP_DO_NOT_CONFIGURE,
         -1
 };
 
-struct platform_data_t tfm_peripheral_timer0 = {
+struct tfm_spm_partition_platform_data_t tfm_peripheral_timer0 = {
         TMR01_BASE,
         TMR01_BASE + 0xFFF,
         PPC_SP_DO_NOT_CONFIGURE,
@@ -132,8 +132,19 @@ enum tfm_plat_err_t system_reset_cfg(void)
     /* Clear SCB_AIRCR_VECTKEY value */
     reg_value &= ~(uint32_t)(SCB_AIRCR_VECTKEY_Msk);
 
+#if 0
     /* Enable system reset request for the secure world only */
     reg_value |= (uint32_t)(SCB_AIRCR_WRITE_MASK | SCB_AIRCR_SYSRESETREQS_Msk);
+#else
+    /* Honor SCB_AIRCR_SYSRESETREQS_VAL
+     *
+     * NOTE: To enable debugger reset and Mbed Greentea test reset, SCB_AIRCR_SYSRESETREQS_VAL
+     * must be 0.
+     */
+    reg_value |= SCB_AIRCR_WRITE_MASK;
+    reg_value &= ~SCB_AIRCR_SYSRESETREQS_Msk;
+    reg_value |= (SCB_AIRCR_SYSRESETREQS_VAL << SCB_AIRCR_SYSRESETREQS_Pos);
+#endif
 
     SCB->AIRCR = reg_value;
 
@@ -152,10 +163,13 @@ enum tfm_plat_err_t init_debug(void)
 /*----------------- NVIC interrupt target state to NS configuration ----------*/
 enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 {
+    /* FIXME: also targeting INTs of hard-wired secure RTC/WDT to NS? Remove for clarity */
+#if 0
     /* Target every interrupt to NS; unimplemented interrupts will be WI */
     for (uint8_t i=0; i<sizeof(NVIC->ITNS)/sizeof(NVIC->ITNS[0]); i++) {
         NVIC->ITNS[i] = 0xFFFFFFFF;
     }
+#endif
 
 #ifdef SECURE_UART1
     /* UART1 is a secure peripheral, so its IRQs have to target S state */

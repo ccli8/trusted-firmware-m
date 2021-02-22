@@ -25,9 +25,9 @@ target_sources(tfm_s
         $<$<C_COMPILER_ID:IAR>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/iar/startup_cmsdk_m2354_s.s>
 )
 target_add_scatter_file(tfm_s
-    $<$<C_COMPILER_ID:ARMClang>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/armclang/m2354_s.sct>
-    $<$<AND:$<VERSION_LESS:${TFM_ISOLATION_LEVEL},3>,$<C_COMPILER_ID:GNU>>:${CMAKE_SOURCE_DIR}/platform/ext/common/gcc/tfm_common_s.ld>
-    $<$<AND:$<VERSION_LESS:${TFM_ISOLATION_LEVEL},3>,$<C_COMPILER_ID:IAR>>:${CMAKE_SOURCE_DIR}/platform/ext/common/iar/tfm_common_s.icf>
+    $<$<C_COMPILER_ID:GNU>:${CMAKE_BINARY_DIR}/generated/platform/ext/common/armclang/tfm_common_s.sct>
+    $<$<C_COMPILER_ID:GNU>:${CMAKE_BINARY_DIR}/generated/platform/ext/common/gcc/tfm_common_s.ld>
+    $<$<C_COMPILER_ID:IAR>:${CMAKE_BINARY_DIR}/generated/platform/ext/common/iar/tfm_common_s.icf>
 )
 
 if(NS)
@@ -51,6 +51,8 @@ endif()
 if(BL2)
     target_sources(bl2
         PRIVATE
+            bsp/Library/StdDriver/src/sys.c
+            bsp/Library/StdDriver/src/clk.c
             $<$<C_COMPILER_ID:ARMClang>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/armclang/startup_cmsdk_m2354_bl2.s>
             $<$<C_COMPILER_ID:GNU>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/gcc/startup_cmsdk_m2354_bl2.S>
             $<$<C_COMPILER_ID:IAR>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/iar/startup_cmsdk_m2354_bl2.s>
@@ -93,6 +95,9 @@ target_sources(platform_s
         ../common/native_drivers/timer_cmsdk_drv.c
         bsp/Library/StdDriver/src/timer.c
         bsp/Library/StdDriver/src/fmc.c
+        bsp/Library/StdDriver/src/sys.c
+        bsp/Library/StdDriver/src/clk.c
+        bsp/Library/StdDriver/src/rtc.c
         ../common/services/src/tfm_platform_system.c
         target_cfg.c
         ../common/spm_hal.c
@@ -107,6 +112,8 @@ target_sources(platform_s
         ${PLATFORM_DIR}/ext/common/template/nv_counters.c
         ${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
         $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/plat_test.c>
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/services/src/platform_extra_secure.c>
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/services/src/platform_extra_secure_guard.c>
 )
 
 target_compile_options(platform_s
@@ -119,9 +126,11 @@ target_compile_options(platform_s
 target_sources(platform_ns
     PRIVATE
         ../common/native_drivers/uart_cmsdk_drv.c
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/native_drivers/timer_cmsdk_drv.c>
         ../common/cmsis_drivers/Driver_USART.c
         device/source/device_definition.c
         device/source/system_core_init.c
+        $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/plat_test.c>
 )
 
 target_include_directories(platform_ns

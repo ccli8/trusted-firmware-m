@@ -43,15 +43,86 @@ uint32_t RefClock        = SYSTEM_CLOCK;
 uint32_t CyclesPerUs     = SYSTEM_CLOCK / 1000000;
 uint32_t PllClock        = SYSTEM_CLOCK;
 
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+
+/**
+ * @brief    Setup Non-secure boundary
+ *
+ * @details  This function is used to set Non-secure boundary according to
+ *           the configuration of partition header file
+ */
+void FMC_NSBA_Setup(void)
+{
+    /* Skip NSBA Setup according config */
+    if(FMC_INIT_NSBA == 0)
+        return;
+
+    /* Check if NSBA value with current active NSBA */
+    if(SCU->FNSADDR != FMC_SECURE_ROM_SIZE)
+    {
+        /* Unlock Protected Register */
+        SYS_UnlockReg();
+
+        /* Enable ISP and config update */
+        FMC->ISPCTL = FMC_ISPCTL_ISPEN_Msk | FMC_ISPCTL_CFGUEN_Msk;
+
+        /* Config Base of NSBA */
+        FMC->ISPADDR = FMC_NSCBA_BASE ;
+
+        /* Read Non-secure base address config */
+        FMC->ISPCMD = FMC_ISPCMD_READ;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+        while(FMC->ISPTRG);
+
+        //while(PA0);
+
+        /* Setting NSBA when it is empty */
+        if(FMC->ISPDAT != 0xfffffffful)
+        {
+            /* Erase old setting */
+            FMC->ISPCMD = FMC_ISPCMD_PAGE_ERASE;
+            FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+            while(FMC->ISPTRG);
+        }
+
+        /* Set new base */
+        FMC->ISPDAT = FMC_SECURE_ROM_SIZE;
+        FMC->ISPCMD = FMC_ISPCMD_PROGRAM;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+        while(FMC->ISPTRG);
+
+        /* Force Chip Reset to valid new setting */
+        SYS->IPRST0 = SYS_IPRST0_CHIPRST_Msk;
+    }
+}
+
+#endif
+
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3L)
+/* Support no SystemCoreClockUpdate(...) in NSPE because CLK driver can call only in SPE. Expect link error
+ * when it is referenced in NSPE. */
+
 /*----------------------------------------------------------------------------
   System Core Clock update function
  *----------------------------------------------------------------------------*/
 void SystemCoreClockUpdate (void)
 {
+#if 0
   SystemCoreClock = SYSTEM_CLOCK;
   PeripheralClock = SYSTEM_CLOCK;
   RefClock        = SYSTEM_CLOCK;
+#else
+    /* Update PLL Clock */
+    PllClock = CLK_GetPLLClockFreq();
+
+    /* Update System Core Clock */
+    SystemCoreClock = CLK_GetCPUFreq();
+
+    /* Update Cycles per micro second */
+    CyclesPerUs = (SystemCoreClock + 500000UL) / 1000000UL;
+#endif
 }
+#endif
 
 /*----------------------------------------------------------------------------
   System initialization function
@@ -69,12 +140,38 @@ void SystemInit (void)
   /* Initial the system */
   SYS_UnlockReg();
 
+  /* Get around BL2 linker error on GNUARM
+   *
+   * ld.exe: no address assigned to the veneers output section .gnu.sgstubs
+   *
+   * BL2 linker file doesn't enable .gnu.sgstubs for SG. We remove all SG in StdDriver sys.c/clk.c
+   * and so we can invoke SYS/CLK driver API.
+   *
+   * TODO: replace direct access to CLK registers with CLK driver API
+   */
+
   /* Enable HIRC and waiting for stable */
   CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
   while((CLK->STATUS & CLK_STATUS_HIRCSTB_Msk) == 0);
 
+  /* Enable HXT and waiting for stable */
+  CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
+  while((CLK->STATUS & CLK_STATUS_HXTSTB_Msk) == 0);
+
+  /* Enable LIRC and waiting for stable */
+  CLK->PWRCTL |= CLK_PWRCTL_LIRCEN_Msk;
+  while((CLK->STATUS & CLK_STATUS_LIRCSTB_Msk) == 0);
+
+  /* Enable LXT and waiting for stable */
+  CLK->PWRCTL |= CLK_PWRCTL_LXTEN_Msk;
+  while((CLK->STATUS & CLK_STATUS_LXTSTB_Msk) == 0);
+
+  /* Enable HIRC48 and waiting for stable */
+  CLK->PWRCTL |= CLK_PWRCTL_HIRC48EN_Msk;
+  while((CLK->STATUS & CLK_STATUS_HIRC48STB_Msk) == 0);
+
   /* Enable PLL and waiting for stable */
-  CLK->PLLCTL = CLK_PLLCTL_96MHz_HIRC;
+  CLK->PLLCTL = CLK_PLLCTL_96MHz_HXT;
   while((CLK->STATUS & CLK_STATUS_PLLSTB_Msk) == 0);
 
   /* Set flash access delay cycle */
@@ -92,7 +189,9 @@ void SystemInit (void)
 
   /* Timer clock source */
   CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR0SEL_Msk)) | CLK_CLKSEL1_TMR0SEL_HIRC;
+#ifdef TFM_ENABLE_IRQ_TEST
   CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR2SEL_Msk)) | CLK_CLKSEL1_TMR2SEL_HIRC;
+#endif
 
   /* Set multi-function pins for UART0 RXD and TXD */
   SYS->GPA_MFPL = (SYS->GPA_MFPL & (~(UART0_RXD_PA6_Msk | UART0_TXD_PA7_Msk))) | UART0_RXD_PA6 | UART0_TXD_PA7;
@@ -115,13 +214,27 @@ void SystemInit (void)
   /* GPIO clk */
   CLK->AHBCLK |= (0xffful << 20) | (1ul << 14);
 
+#ifdef TFM_ENABLE_PERIPH_ACCESS_TEST
   /* PD2 LED */
   PD2 = 1;
   PD->MODE = (PD->MODE & (~(0x3 << 2))) | (1 << 2);
+#endif
+
+  /* Configure NSCBA programmatic
+   *
+   * This is done at first boot so that we needn't external programming tool extra.
+   */
+  FMC_NSBA_Setup();
+
+  /* Default to (shallow) sleep/idle mode configuration to enable entering (shallow) sleep/idle
+   * mode without crossing SPE/NSPE boundary */
+    SYS_UnlockReg();
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+    CLK->PWRCTL &= ~CLK_PWRCTL_PDEN_Msk;
 
 #endif
 
-
+      
 
   SystemCoreClock = SYSTEM_CLOCK;
 }
