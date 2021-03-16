@@ -59,9 +59,6 @@ static plat_xtra_sec_hdlr_t plat_xtra_sec_hdlr_tab[] = {
     nu_rtc_read_spare_register_s,
     nu_rtc_write_spare_register_s,
     nu_rtc_isenabled_s,
-    nu_trng_init_s,
-    nu_trng_free_s,
-    nu_trng_get_bytes_s,
 };
 
 /* In our implementation, request code also plays as index into handler table
