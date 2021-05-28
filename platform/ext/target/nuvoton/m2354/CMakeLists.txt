@@ -119,6 +119,7 @@ target_compile_options(platform_s
 target_compile_definitions(platform_s
     PUBLIC
         NU_TFM_PLAT_IOCTL_S=1
+        $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
 )
 
 #========================= Platform Non-Secure ================================#
@@ -156,6 +157,7 @@ target_include_directories(platform_ns
 target_compile_definitions(platform_ns
     PUBLIC
         NU_TFM_PLAT_IOCTL_NS=1
+        $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
 )
 
 #========================= Platform BL2 =======================================#
@@ -190,5 +192,9 @@ if(BL2)
     target_compile_options(platform_bl2
         PUBLIC
             ${COMPILER_CMSE_FLAG}
+    )
+    target_compile_definitions(platform_bl2
+        PUBLIC
+            $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
     )
 endif()
