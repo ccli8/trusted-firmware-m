@@ -174,9 +174,13 @@ void SystemInit (void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
     while((CLK->STATUS & CLK_STATUS_HIRCSTB_Msk) == 0);
 
+#if NU_HXT_PRESENT
     /* Enable HXT and waiting for stable */
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
     while((CLK->STATUS & CLK_STATUS_HXTSTB_Msk) == 0);
+#else
+    CLK->PWRCTL &= ~CLK_PWRCTL_HXTEN_Msk;
+#endif
 
     /* Enable LIRC and waiting for stable */
     CLK->PWRCTL |= CLK_PWRCTL_LIRCEN_Msk;
@@ -194,7 +198,11 @@ void SystemInit (void)
     CLK->CLKSEL0 = (CLK->CLKSEL0  & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HIRC;
 
     /* Enable PLL and waiting for stable */
+#if NU_HXT_PRESENT
+    CLK->PLLCTL = CLK_PLLCTL_96MHz_HXT;
+#else
     CLK->PLLCTL = CLK_PLLCTL_96MHz_HIRC;
+#endif
     while((CLK->STATUS & CLK_STATUS_PLLSTB_Msk) == 0);
 
     /* Set flash access delay cycle */
