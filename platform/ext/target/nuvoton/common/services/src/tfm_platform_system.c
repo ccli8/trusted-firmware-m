@@ -59,6 +59,12 @@ static plat_xtra_sec_hdlr_t plat_xtra_sec_hdlr_tab[] = {
     nu_rtc_read_spare_register_s,
     nu_rtc_write_spare_register_s,
     nu_rtc_isenabled_s,
+
+    /* Prefix with "nu" for PSA compliance test */
+    nu_wd_timer_init_s,
+    nu_wd_timer_enable_s,
+    nu_wd_timer_disable_s,
+    nu_wd_timer_is_enabled_s,
 };
 
 /* In our implementation, request code also plays as index into handler table

@@ -78,6 +78,12 @@ typedef enum {
     NU_PLAT_XTRA_SEC_REQ(nu_rtc_write_spare_register_s),
     NU_PLAT_XTRA_SEC_REQ(nu_rtc_isenabled_s),
 
+    /* Prefix with "nu" for PSA compliance test */
+    NU_PLAT_XTRA_SEC_REQ(nu_wd_timer_init_s),
+    NU_PLAT_XTRA_SEC_REQ(nu_wd_timer_enable_s),
+    NU_PLAT_XTRA_SEC_REQ(nu_wd_timer_disable_s),
+    NU_PLAT_XTRA_SEC_REQ(nu_wd_timer_is_enabled_s),
+
     /* Max request code, plays as number of valid request code */
     NU_PLAT_XTRA_SEC_REQ(MAX),
 
@@ -341,6 +347,41 @@ NU_PLAT_XTRA_SEC_HDLR(nu_rtc_write_spare_register_s);
 int32_t nu_rtc_isenabled_s(void);
 #elif NU_TFM_PLAT_IOCTL_S
 NU_PLAT_XTRA_SEC_HDLR(nu_rtc_isenabled_s);
+#endif
+
+/* Enable PSA compliance test
+ *
+ * The following functions named "nu_wd_timer*" are to enable PSA compliance test.
+ * Refer to the link below for details:
+ * https://github.com/ARM-software/psa-arch-tests/tree/master/api-tests
+ */
+
+/* Initializes an hardware watchdog timer */
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_init_s(uint32_t base_addr, uint32_t time_us, uint32_t timer_tick_us);
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_init_s);
+#endif
+
+/* Enables a hardware watchdog timer */
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_enable_s(uint32_t base_addr);
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_enable_s);
+#endif
+
+/* Disables a hardware watchdog timer */
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_disable_s(uint32_t base_addr);
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_disable_s);
+#endif
+
+/* Checks whether hardware watchdog timer is enabled */
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_is_enabled_s(uint32_t base_addr);
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_is_enabled_s);
 #endif
 
 #ifdef __cplusplus
