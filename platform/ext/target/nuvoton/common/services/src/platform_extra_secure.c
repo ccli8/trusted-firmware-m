@@ -913,3 +913,244 @@ NU_PLAT_XTRA_SEC_HDLR(nu_rtc_isenabled_s)
     return TFM_PLATFORM_ERR_SUCCESS;
 }
 #endif
+
+
+/* Enable PSA compliance test */
+
+/* Configure WDT clock source, CLK_CLKSEL1_WDTSEL_LXT/CLK_CLKSEL1_WDTSEL_LIRC */
+#define NU_WDT_CLKSRC                   CLK_CLKSEL1_WDTSEL_LIRC
+
+/* List of hardware-supported watchdog timeout in clocks */
+#define NU_WDT_16CLK                    16
+#define NU_WDT_64CLK                    64
+#define NU_WDT_256CLK                   256
+#define NU_WDT_1024CLK                  1024
+#define NU_WDT_4096CLK                  4096
+#define NU_WDT_16384CLK                 16384
+#define NU_WDT_65536CLK                 65536
+#define NU_WDT_262144CLK                262144
+
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_init_s(uint32_t base_addr, uint32_t time_us, uint32_t timer_tick_us)
+{
+    /* Set up input parameter for NSC call */
+    uint8_t inbuf[12];
+    nu_set32_be(inbuf, base_addr);
+    nu_set32_be(inbuf + 4, time_us);
+    nu_set32_be(inbuf + 8, timer_tick_us);
+
+    /* Set up output parameter for NSC call */
+    uint8_t outbuf[4];
+
+    /* Invoke NSC function */
+    PLAT_NSC_CALL(nu_wd_timer_init_s, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+
+    /* Finalize output */
+    int32_t rc = nu_get32_be(outbuf);
+    return rc;
+}
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_init_s)
+{
+    /* Check parameter validity */
+    NU_CHK_PARAM_VAL(12, 4);
+
+    uint32_t base_addr = nu_get32_be(in_vec->base);
+    uint32_t time_us = nu_get32_be(((const uint8_t *) in_vec->base) + 4);
+    uint32_t timer_tick_us = nu_get32_be(((const uint8_t *) in_vec->base) + 8);
+
+    /* Check validity of WDT base address */
+    if (base_addr != ((uint32_t) WDT)) {
+        /* Return FAILURE */
+        nu_set32_be(out_vec->base, 1);
+
+        return TFM_PLATFORM_ERR_SUCCESS;
+    }
+
+    /* Try to figure out one H/W WDT timeout which meets the request */
+    uint32_t wdt_timeout_clk = time_us * timer_tick_us;
+    uint32_t wdt_timeout_clk_toutsel;
+    if (wdt_timeout_clk >= NU_WDT_262144CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW18;
+    } else if (wdt_timeout_clk >= NU_WDT_65536CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW16;
+    } else if (wdt_timeout_clk >= NU_WDT_16384CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW14;
+    } else if (wdt_timeout_clk >= NU_WDT_4096CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW12;
+    } else if (wdt_timeout_clk >= NU_WDT_1024CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW10;
+    } else if (wdt_timeout_clk >= NU_WDT_256CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW8;
+    } else if (wdt_timeout_clk >= NU_WDT_64CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW6;
+    } else if (wdt_timeout_clk >= NU_WDT_16CLK) {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW4;
+    } else {
+        wdt_timeout_clk_toutsel = WDT_TIMEOUT_2POW4;
+    }
+
+    SYS_UnlockReg();
+
+    /* Enable IP module clock */
+    CLK_EnableModuleClock(WDT_MODULE);
+
+    /* Select IP clock source */
+    CLK_SetModuleClock(WDT_MODULE, NU_WDT_CLKSRC, 0);
+
+    /* Configure reset delay on timeout */
+    WDT->ALTCTL = WDT_RESET_DELAY_130CLK;
+
+    /* Reset watchdog timer */
+    WDT_RESET_COUNTER();
+
+    /* Configure WDT timeout (& Not enable WDT) & Clear reset flag & Enable reset */
+    WDT->CTL = wdt_timeout_clk_toutsel | WDT_CTL_RSTF_Msk | WDT_CTL_RSTEN_Msk;
+
+    SYS_LockReg();
+
+    /* Return SUCCESS */
+    nu_set32_be(out_vec->base, 0);
+
+    return TFM_PLATFORM_ERR_SUCCESS;
+}
+#endif
+
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_enable_s(uint32_t base_addr)
+{
+    /* Set up input parameter for NSC call */
+    uint8_t inbuf[4];
+    nu_set32_be(inbuf, base_addr);
+
+    /* Set up output parameter for NSC call */
+    uint8_t outbuf[4];
+
+    /* Invoke NSC function */
+    PLAT_NSC_CALL(nu_wd_timer_enable_s, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+
+    /* Finalize output */
+    int32_t rc = nu_get32_be(outbuf);
+    return rc;
+}
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_enable_s)
+{
+    /* Check parameter validity */
+    NU_CHK_PARAM_VAL(4, 4);
+
+    uint32_t base_addr = nu_get32_be(in_vec->base);
+
+    /* Check validity of WDT base address */
+    if (base_addr != ((uint32_t) WDT)) {
+        /* Return FAILURE */
+        nu_set32_be(out_vec->base, 1);
+
+        return TFM_PLATFORM_ERR_SUCCESS;
+    }
+
+    SYS_UnlockReg();
+
+    /* Enable WDT & Clear reset flag & Enable reset */
+    WDT->CTL |= (WDT_CTL_WDTEN_Msk | WDT_CTL_RSTF_Msk | WDT_CTL_RSTEN_Msk);
+
+    SYS_LockReg();
+
+    /* Return SUCCESS */
+    nu_set32_be(out_vec->base, 0);
+
+    return TFM_PLATFORM_ERR_SUCCESS;
+}
+#endif
+
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_disable_s(uint32_t base_addr)
+{
+    /* Set up input parameter for NSC call */
+    uint8_t inbuf[4];
+    nu_set32_be(inbuf, base_addr);
+
+    /* Set up output parameter for NSC call */
+    uint8_t outbuf[4];
+
+    /* Invoke NSC function */
+    PLAT_NSC_CALL(nu_wd_timer_disable_s, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+
+    /* Finalize output */
+    int32_t rc = nu_get32_be(outbuf);
+    return rc;
+}
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_disable_s)
+{
+    /* Check parameter validity */
+    NU_CHK_PARAM_VAL(4, 4);
+
+    uint32_t base_addr = nu_get32_be(in_vec->base);
+
+    /* Check validity of WDT base address */
+    if (base_addr != ((uint32_t) WDT)) {
+        /* Return FAILURE */
+        nu_set32_be(out_vec->base, 1);
+
+        return TFM_PLATFORM_ERR_SUCCESS;
+    }
+
+    SYS_UnlockReg();
+
+    /* Disable WDT & Clear reset flag */
+    WDT->CTL &= ~WDT_CTL_WDTEN_Msk;
+    WDT->CTL |= WDT_CTL_RSTF_Msk;
+
+    SYS_LockReg();
+
+    /* Return SUCCESS */
+    nu_set32_be(out_vec->base, 0);
+
+    return TFM_PLATFORM_ERR_SUCCESS;
+}
+#endif
+
+#if NU_TFM_PLAT_IOCTL_NS
+int32_t nu_wd_timer_is_enabled_s(uint32_t base_addr)
+{
+    /* Set up input parameter for NSC call */
+    uint8_t inbuf[4];
+    nu_set32_be(inbuf, base_addr);
+
+    /* Set up output parameter for NSC call */
+    uint8_t outbuf[4];
+
+    /* Invoke NSC function */
+    PLAT_NSC_CALL(nu_wd_timer_is_enabled_s, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+
+    /* Finalize output */
+    int32_t enabled = nu_get32_be(outbuf);
+    return enabled;
+}
+#elif NU_TFM_PLAT_IOCTL_S
+NU_PLAT_XTRA_SEC_HDLR(nu_wd_timer_is_enabled_s)
+{
+    /* Check parameter validity */
+    NU_CHK_PARAM_VAL(4, 4);
+
+    uint32_t base_addr = nu_get32_be(in_vec->base);
+
+    /* Check validity of WDT base address */
+    if (base_addr != ((uint32_t) WDT)) {
+        /* Return FAILURE */
+        nu_set32_be(out_vec->base, 1);
+
+        return TFM_PLATFORM_ERR_SUCCESS;
+    }
+
+    if (!(WDT->CTL & WDT_CTL_WDTEN_Msk)) {
+        return;
+    }
+
+    /* Return WDT enabled or not */
+    nu_set32_be(out_vec->base, !!(WDT->CTL & WDT_CTL_WDTEN_Msk));
+
+    return TFM_PLATFORM_ERR_SUCCESS;
+}
+#endif
