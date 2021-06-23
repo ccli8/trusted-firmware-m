@@ -20,11 +20,11 @@
 
 /* Flash layout on M2354 with BL2 (single image boot):
  *
- * 0x0000_0000 BL2 - MCUBoot (64KB)
- * 0x0001_0000 Protected Storage Area (32 KB)
- * 0x0000_8000 Internal Trusted Storage Area (28 KB)
- * 0x0000_F000 NV counters area (4 KB)
- * 0x0002_0000 Primary image area (320KB):
+ * 0x0000_0000 BL2 - MCUBoot (48KB)
+ * 0x0000_C000 Protected Storage Area (56 KB)
+ * 0x0001_A000 Internal Trusted Storage Area (20 KB)
+ * 0x0001_F000 NV counters area (4 KB)
+ * 0x0002_0000 Primary image area (896KB):
  *    0x0002_0000 Secure     image primary
  *    0x0007_0000 Non-secure image primary
  * 0x0010_0000 Scratch area (4KB)
@@ -61,13 +61,13 @@
  * swapping.
  */
 #define FLASH_AREA_BL2_OFFSET      (0x0)
-#define FLASH_AREA_BL2_SIZE        (0x10000) /* 64 KB */
+#define FLASH_AREA_BL2_SIZE        (0xC000) /* 48 KB */
 
 #if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 1)
 /* Secure + Non-secure image primary slot */
 #define FLASH_AREA_0_ID            (1)
-#define FLASH_AREA_0_OFFSET        (FLASH_AREA_BL2_OFFSET + FLASH_AREA_BL2_SIZE + 0x10000)        /* 0x10000 */
-#define FLASH_AREA_0_SIZE          (FLASH_S_PARTITION_SIZE + FLASH_NS_PARTITION_SIZE)   /* 480 KB */
+#define FLASH_AREA_0_OFFSET        (FLASH_AREA_BL2_OFFSET + FLASH_AREA_BL2_SIZE + 0x14000)  /* Reserved for storage */
+#define FLASH_AREA_0_SIZE          (FLASH_S_PARTITION_SIZE + FLASH_NS_PARTITION_SIZE)
 /* Secure + Non-secure secondary slot */
 #define FLASH_AREA_2_ID            (FLASH_AREA_0_ID + 1)
 #define FLASH_AREA_2_OFFSET        (0x100000)
@@ -93,18 +93,18 @@
 #endif /* MCUBOOT_IMAGE_NUMBER */
 
 /* Protected Storage (PS) Service definitions */
-#define FLASH_PS_AREA_OFFSET            (0x10000)
-#define FLASH_PS_AREA_SIZE              (0x8000)
+#define FLASH_PS_AREA_OFFSET            (FLASH_AREA_BL2_OFFSET + FLASH_AREA_BL2_SIZE)
+#define FLASH_PS_AREA_SIZE              (0xE000)
 
 /* Internal Trusted Storage (ITS) Service definitions */
 #define FLASH_ITS_AREA_OFFSET           (FLASH_PS_AREA_OFFSET + \
                                          FLASH_PS_AREA_SIZE)
-#define FLASH_ITS_AREA_SIZE             (0x7000)
+#define FLASH_ITS_AREA_SIZE             (0x5000)
 
 /* NV Counters definitions */
 #define FLASH_NV_COUNTERS_AREA_OFFSET   (FLASH_ITS_AREA_OFFSET + \
                                          FLASH_ITS_AREA_SIZE)
-#define FLASH_NV_COUNTERS_AREA_SIZE     (FLASH_AREA_IMAGE_SECTOR_SIZE)
+#define FLASH_NV_COUNTERS_AREA_SIZE     (0x1000)
 
 /* Offset and size definition in flash area used by assemble.py */
 #define SECURE_IMAGE_OFFSET             (0x0)
