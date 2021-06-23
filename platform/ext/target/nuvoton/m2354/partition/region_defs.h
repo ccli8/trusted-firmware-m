@@ -88,7 +88,7 @@
 #define S_CODE_LIMIT    (S_CODE_START + S_CODE_SIZE - 1)
 
 #define S_DATA_START    (S_RAM_ALIAS(0x0))
-#define S_DATA_SIZE     (80 * 1024)
+#define S_DATA_SIZE     (96 * 1024)
 #define S_DATA_LIMIT    (S_DATA_START + S_DATA_SIZE - 1)
 
 /* Size of vector table: 117 interrupt handlers + 4 bytes MPS initial value */
