@@ -17,3 +17,4 @@ set(TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/plat
 set(CRYPTO_NV_SEED                      OFF         CACHE BOOL      "Use stored NV seed to provide entropy")
 
 set(NU_HXT_PRESENT          OFF     CACHE BOOL      "Whether high-speed external crystal oscillator HXT is present")
+set(NU_SDH_CMSIS_FLASH      ON      CACHE BOOL      "Whether support SDH as CMSIS Flash driver")

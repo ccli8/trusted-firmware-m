@@ -94,6 +94,13 @@
 #define   RTE_FLASH0                     1
 // </e> FLASH (Flash Memory) [Driver_FLASH0]
 
+#if NU_SDH_CMSIS_FLASH
+// <e> SDH FLASH (Flash Memory) [Driver_SDH_FLASH0]
+// <i> Configuration settings for Driver_SDH_FLASH0 in component ::Drivers:FLASH
+#define   RTE_SDH_FLASH0                 1
+// </e> SDH FLASH (Flash Memory) [Driver_SDH_FLASH0]
+#endif
+
 // <e> MPC (Memory Protection Controller) [Driver_ISRAM0_MPC]
 // <i> Configuration settings for Driver_ISRAM0_MPC in component ::Drivers:MPC
 #define   RTE_ISRAM0_MPC                 0
