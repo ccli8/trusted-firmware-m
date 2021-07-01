@@ -40,7 +40,9 @@
 /* calculate CRC-7 and get an error result, software should ignore this error and clear SDISR [CRC_IF] flag */
 /* _sd_uR3_CMD is the flag for it. 1 means software should ignore CRC-7 error */
 uint8_t g_u8R3Flag = 0UL;
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
 uint8_t volatile g_u8SDDataReadyFlag = (uint8_t)FALSE;
+#endif
 
 static uint32_t _SDH_uR7_CMD = 0UL;
 static uint32_t _SDH_ReferenceClock;
@@ -910,7 +912,16 @@ uint32_t SDH_Read(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32_
     u32Loop = u32SecCount / 255UL;
     while(u32Loop > 0UL)
     {
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         g_u8SDDataReadyFlag = (uint8_t)FALSE;
+#else
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk);
+#endif
+#if NU_SDH_ENA_TIMEOUT
+        /* Initialize timeout */
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+        sdh->TOUT = 0xFFFFFF;
+#endif
         u32Reg = sdh->CTL & ~SDH_CTL_CMDCODE_Msk;
         u32Reg = u32Reg | 0xff0000UL;   /* set BLK_CNT to 255 */
         if(u32IsSendCmd == (uint32_t)FALSE)
@@ -923,9 +934,17 @@ uint32_t SDH_Read(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32_
             sdh->CTL = u32Reg | SDH_CTL_DIEN_Msk;
         }
 
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         while(!g_u8SDDataReadyFlag)
+#else
+        while(!SDH_GET_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk))
+#endif
         {
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
             if(g_u8SDDataReadyFlag)
+#else
+            if(SDH_GET_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk))
+#endif
             {
                 break;
             }
@@ -933,6 +952,14 @@ uint32_t SDH_Read(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32_
             {
                 return SDH_NO_SD_CARD;
             }
+#if NU_SDH_ENA_TIMEOUT
+            /* Check timeout */
+            if (SDH_GET_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk))
+            {
+                SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+                return SDH_ERR_DEVICE;
+            }
+#endif
         }
 
         if(!(sdh->INTSTS & SDH_INTSTS_CRC7_Msk))     /* check CRC7 */
@@ -951,7 +978,16 @@ uint32_t SDH_Read(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32_
     if(u32Loop != 0UL)
     {
         uint32_t u32RegTmp;
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         g_u8SDDataReadyFlag = (uint8_t)FALSE;
+#else
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk);
+#endif
+#if NU_SDH_ENA_TIMEOUT
+        /* Initialize timeout */
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+        sdh->TOUT = 0xFFFFFF;
+#endif
         u32Reg = sdh->CTL & (~SDH_CTL_CMDCODE_Msk);
         u32Reg = u32Reg & (~SDH_CTL_BLKCNT_Msk);
         u32RegTmp = (u32Loop << 16);
@@ -967,12 +1003,24 @@ uint32_t SDH_Read(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32_
             sdh->CTL = u32Reg | SDH_CTL_DIEN_Msk;
         }
 
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         while(!g_u8SDDataReadyFlag)
+#else
+        while(!SDH_GET_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk))
+#endif
         {
             if(pSD->IsCardInsert == (uint8_t)FALSE)
             {
                 return SDH_NO_SD_CARD;
             }
+#if NU_SDH_ENA_TIMEOUT
+            /* Check timeout */
+            if (SDH_GET_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk))
+            {
+                SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+                return SDH_ERR_DEVICE;
+            }
+#endif
         }
 
         if(!(sdh->INTSTS & SDH_INTSTS_CRC7_Msk))     /* check CRC7 */
@@ -1053,7 +1101,16 @@ uint32_t SDH_Write(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32
     u32Loop = u32SecCount / 255UL;   /* the maximum block count is 0xFF=255 for register SDCR[BLK_CNT] */
     while(u32Loop > 0UL)
     {
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         g_u8SDDataReadyFlag = (uint8_t)FALSE;
+#else
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk);
+#endif
+#if NU_SDH_ENA_TIMEOUT
+        /* Initialize timeout */
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+        sdh->TOUT = 0xFFFFFF;
+#endif
         u32Reg = sdh->CTL & 0xff00c080UL;
         u32Reg = u32Reg | 0xff0000UL;   /* set BLK_CNT to 0xFF=255 */
         if(!u32IsSendCmd)
@@ -1066,12 +1123,24 @@ uint32_t SDH_Write(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32
             sdh->CTL = u32Reg | SDH_CTL_DOEN_Msk;
         }
 
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         while(!g_u8SDDataReadyFlag)
+#else
+        while(!SDH_GET_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk))
+#endif
         {
             if(pSD->IsCardInsert == (uint8_t)FALSE)
             {
                 return SDH_NO_SD_CARD;
             }
+#if NU_SDH_ENA_TIMEOUT
+            /* Check timeout */
+            if (SDH_GET_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk))
+            {
+                SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+                return SDH_ERR_DEVICE;
+            }
+#endif
         }
 
         if((sdh->INTSTS & SDH_INTSTS_CRCIF_Msk) != 0UL)      /* check CRC */
@@ -1086,7 +1155,16 @@ uint32_t SDH_Write(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32
     if(u32Loop != 0UL)
     {
         uint32_t u32RegTmp;
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         g_u8SDDataReadyFlag = (uint8_t)FALSE;
+#else
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk);
+#endif
+#if NU_SDH_ENA_TIMEOUT
+        /* Initialize timeout */
+        SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+        sdh->TOUT = 0xFFFFFF;
+#endif
         u32RegTmp = (u32Loop << 16);
         u32Reg = (sdh->CTL & 0xff00c080UL) | u32RegTmp;
         if(!u32IsSendCmd)
@@ -1099,12 +1177,24 @@ uint32_t SDH_Write(SDH_T *sdh, uint8_t *pu8BufAddr, uint32_t u32StartSec, uint32
             sdh->CTL = u32Reg | SDH_CTL_DOEN_Msk;
         }
 
+#if !defined(NU_SDH_DIS_INTR) || (NU_SDH_DIS_INTR == 0UL)
         while(!g_u8SDDataReadyFlag)
+#else
+        while(!SDH_GET_INT_FLAG(sdh, SDH_INTSTS_BLKDIF_Msk))
+#endif
         {
             if(pSD->IsCardInsert == (uint8_t)FALSE)
             {
                 return SDH_NO_SD_CARD;
             }
+#if NU_SDH_ENA_TIMEOUT
+            /* Check timeout */
+            if (SDH_GET_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk))
+            {
+                SDH_CLR_INT_FLAG(sdh, SDH_INTSTS_RTOIF_Msk | SDH_INTSTS_DITOIF_Msk);
+                return SDH_ERR_DEVICE;
+            }
+#endif
         }
 
         if((sdh->INTSTS & SDH_INTSTS_CRCIF_Msk) != 0UL)      /* check CRC */
