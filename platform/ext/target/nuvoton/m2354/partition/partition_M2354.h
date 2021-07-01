@@ -76,7 +76,11 @@
 //   <o.16>  EBI    <0=> Secure <1=> Non-Secure
 //   <o.24>  PDMA1      <0=> Secure <1=> Non-Secure
 */
+#if NU_SDH_CMSIS_FLASH
+#define SCU_INIT_PNSSET0_VAL      0xFFFFDFFF
+#else
 #define SCU_INIT_PNSSET0_VAL      0xFFFFFFFF
+#endif
 /*
     PNSSET1
 */
