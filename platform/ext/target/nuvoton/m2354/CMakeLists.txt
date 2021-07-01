@@ -98,11 +98,13 @@ target_sources(platform_s
         bsp/Library/StdDriver/src/sys.c
         bsp/Library/StdDriver/src/clk.c
         bsp/Library/StdDriver/src/rtc.c
+        $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
         ../common/services/src/tfm_platform_system.c
         target_cfg.c
         ../common/spm_hal.c
         ../common/tfm_hal_isolation.c
         ../common/boot_hal.c
+        $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
         ${PLATFORM_DIR}/ext/common/uart_stdout.c
         ${PLATFORM_DIR}/ext/common/tfm_platform.c
         ${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
@@ -120,6 +122,12 @@ target_compile_definitions(platform_s
     PUBLIC
         NU_TFM_PLAT_IOCTL_S=1
         $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_UPDATE_STAGE_SDH=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_CMSIS_FLASH=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_DIS_INTR=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_ENA_TIMEOUT=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_INIT_GUARD=1>    # Cover upper layer missing doing SDH initialization
+        $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
 )
 
 #========================= Platform Non-Secure ================================#
@@ -172,6 +180,8 @@ if(BL2)
             ../common/native_drivers/uart_cmsdk_drv.c
             ../common/cmsis_drivers/Driver_USART.c
             bsp/Library/StdDriver/src/fmc.c
+            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
+            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
     )
     target_include_directories(platform_bl2
         PUBLIC
@@ -196,5 +206,11 @@ if(BL2)
     target_compile_definitions(platform_bl2
         PUBLIC
             $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_UPDATE_STAGE_SDH=1>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_CMSIS_FLASH=1>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_DIS_INTR=1>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_ENA_TIMEOUT=1>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_DUMMY_ON_ABSENT=1>   # Simulate dummy SD card on detached because MCUboot will panic on read failure
+            $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
     )
 endif()
