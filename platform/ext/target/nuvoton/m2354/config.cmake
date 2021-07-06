@@ -7,7 +7,7 @@
 #
 #-------------------------------------------------------------------------------
 
-set(MCUBOOT_IMAGE_NUMBER    1      CACHE STRING    "Whether to combine S and NS into either 1 image, or sign each separately")
+set(MCUBOOT_IMAGE_NUMBER    2      CACHE STRING    "Whether to combine S and NS into either 1 image, or sign each separately")
 set(PS_MAX_ASSET_SIZE       1536   CACHE STRING    "The maximum asset size to be stored in the Protected Storage area")
 set(PS_NUM_ASSETS           45     CACHE STRING    "The maximum number of assets to be stored in the Protected Storage area")
 set(ITS_MAX_ASSET_SIZE      512    CACHE STRING    "The maximum asset size to be stored in the Internal Trusted Storage area")
@@ -25,5 +25,11 @@ set(CRYPTO_NV_SEED                      OFF         CACHE BOOL      "Use stored 
 # trusted-firmware-m/secure_fw/partitions/crypto/crypto_init.c
 set(CRYPTO_ENGINE_BUF_SIZE              0x2800      CACHE STRING    "Heap size for the crypto backend")
 
+# PSA Firmware Update
+set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT  ON        CACHE BOOL      "Platform supports firmware update, such as network connectivities and bootloader support")
+set(TFM_PARTITION_FIRMWARE_UPDATE       ON          CACHE BOOL      "Enable firmware update partition")
+set(MCUBOOT_DATA_SHARING                ON          CACHE BOOL      "Add sharing of application specific data using the same shared data area as for the measured boot")
+
 set(NU_HXT_PRESENT          OFF     CACHE BOOL      "Whether high-speed external crystal oscillator HXT is present")
-set(NU_SDH_CMSIS_FLASH      ON      CACHE BOOL      "Whether support SDH as CMSIS Flash driver")
+set(NU_UPDATE_STAGE_SDH     ON      CACHE BOOL      "Whether enable SDH as update staging area")
+set(NU_UPDATE_STAGE_FLASH   OFF     CACHE BOOL      "Whether enable embedded flash as update staging area")
