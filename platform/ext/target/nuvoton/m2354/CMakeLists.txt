@@ -103,7 +103,6 @@ target_sources(platform_s
         target_cfg.c
         ../common/spm_hal.c
         ../common/tfm_hal_isolation.c
-        ../common/boot_hal.c
         $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
         ${PLATFORM_DIR}/ext/common/uart_stdout.c
         ${PLATFORM_DIR}/ext/common/tfm_platform.c
@@ -124,6 +123,7 @@ target_compile_definitions(platform_s
         $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
         $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_CMSIS_FLASH=1>
         $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_DIS_INTR=1>
+        $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_INIT_GUARD=1>    # Cover upper layer missing doing SDH initialization
 )
 
 #========================= Platform Non-Secure ================================#
@@ -194,6 +194,9 @@ if(BL2)
             ../common/
             ${PLATFORM_DIR}/..
             ../common/native_drivers
+            ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include     #
+            ${MCUBOOT_PATH}/boot/bootutil/include           # For bootutil_log.h
+            ${CMAKE_BINARY_DIR}/bl2/ext/mcuboot             # For mcuboot_config.h
     )
     target_compile_options(platform_bl2
         PUBLIC
@@ -204,6 +207,6 @@ if(BL2)
             $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
             $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_CMSIS_FLASH=1>
             $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_DIS_INTR=1>
-            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_DUMMY_ON_ABSENT=1>   # Dummy SD card on absent because MCUboot will panic on read failure.
+            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:NU_SDH_DUMMY_ON_ABSENT=1>   # Simulate dummy SD card on detached because MCUboot will panic on read failure
     )
 endif()
