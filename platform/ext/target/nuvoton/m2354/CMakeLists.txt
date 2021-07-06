@@ -9,10 +9,27 @@
 cmake_policy(SET CMP0076 NEW)
 set(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
+function(tfm_nu_invalid_update_config)
+    if (${ARGV})
+        string (REPLACE ";" " " ARGV_STRING "${ARGV}")
+
+        message(FATAL_ERROR "INVALID UPDATE CONFIG: ${ARGV_STRING}")
+    endif()
+endfunction()
+
+# Can specify at most one storage for update staging area
+tfm_nu_invalid_update_config(NU_UPDATE_STAGE_SDH AND NU_UPDATE_STAGE_FLASH)
+
 #========================= Platform region defs ===============================#
 target_include_directories(platform_region_defs
     INTERFACE
         partition
+)
+
+target_compile_definitions(platform_region_defs
+    INTERFACE
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_UPDATE_STAGE_SDH=1>
+        $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
 )
 
 #========================= Platform common defs ===============================#
@@ -93,9 +110,9 @@ target_sources(platform_s
         bsp/Library/StdDriver/src/sys.c
         bsp/Library/StdDriver/src/clk.c
         bsp/Library/StdDriver/src/rtc.c
-        $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
         ../common/services/src/tfm_platform_system.c
-        $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
+        $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
         ${PLATFORM_DIR}/ext/common/uart_stdout.c
         $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/plat_test.c>
         $<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/services/src/platform_extra_secure.c>
@@ -169,8 +186,9 @@ if(BL2)
             ../common/cmsis_drivers/Driver_USART.c
             bsp/Library/StdDriver/src/fmc.c
             bsp/Library/StdDriver/src/tamper.c
-            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
-            $<$<BOOL:${NU_SDH_CMSIS_FLASH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
+            ../common/boot_hal_bl2.c
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/bsp/StdDriver/src/sdh.c>
+            $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:${CMAKE_CURRENT_SOURCE_DIR}/../common/cmsis_drivers/Driver_SDH_Flash.c>
     )
     target_include_directories(platform_bl2
         PUBLIC
@@ -203,6 +221,10 @@ if(BL2)
             $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
         PRIVATE
             $<$<BOOL:${BL2}>:BL2>
+    )
+    target_link_libraries(platform_bl2
+        PUBLIC
+            bootutil
     )
 endif()
 
