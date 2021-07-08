@@ -162,6 +162,9 @@ static int32_t ARM_Flash_Initialize(ARM_Flash_SignalEvent_t cb_event)
 
     /* Nothing to be done */
 
+    /* Unlock protected registers */
+    SYS_UnlockReg();
+
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();
     FMC_ENABLE_LD_UPDATE();
@@ -256,6 +259,9 @@ static int32_t ARM_Flash_ProgramData(uint32_t addr, const void *data, uint32_t c
 
             if(j>=4)
             {
+                /* Unlock protected registers */
+                SYS_UnlockReg();
+
                 FMC_Write(start_addr+(i+1-4), u32Data);
                 // verify
                 if(M32(start_addr + i - 3) != u32Data)
@@ -294,6 +300,9 @@ static int32_t ARM_Flash_EraseSector(uint32_t addr)
         return ARM_DRIVER_ERROR_PARAMETER;
     }
 
+    /* Unlock protected registers */
+    SYS_UnlockReg();
+
     FMC_Erase(start_addr);
 
     return ARM_DRIVER_OK;
@@ -310,6 +319,9 @@ static int32_t ARM_Flash_EraseChip(void)
     {
         for(i = 0; i < FLASH0_DEV->data->sector_count; i++)
         {
+            /* Unlock protected registers */
+            SYS_UnlockReg();
+
             FMC_Erase(addr);
             addr += FLASH0_DEV->data->sector_size;
             rc = ARM_DRIVER_OK;
