@@ -13,5 +13,6 @@ set(ITS_NUM_ASSETS          12     CACHE STRING    "The maximum number of assets
 
 set(CRYPTO_HW_ACCELERATOR               ON          CACHE BOOL      "Whether to enable the crypto hardware accelerator on supported platforms")
 set(TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/platform/ext/target/nuvoton/m2354/accelerator/mbedtls_accelerator_config.h  CACHE PATH "Config to append to standard Mbed Crypto config, used by platforms to cnfigure feature support")
+set(PLATFORM_DUMMY_NV_SEED              FALSE       CACHE BOOL      "Use dummy NV seed implementation. Should not be used in production.")
 
 set(NU_HXT_PRESENT          OFF     CACHE BOOL      "Whether high-speed external crystal oscillator HXT is present")
