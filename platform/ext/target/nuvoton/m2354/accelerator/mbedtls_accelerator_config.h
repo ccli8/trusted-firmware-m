@@ -14,6 +14,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* RNG Config */
+#undef MBEDTLS_ENTROPY_NV_SEED
 #undef MBEDTLS_TEST_NULL_ENTROPY
 #undef MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
 #define MBEDTLS_PLATFORM_ENTROPY
