@@ -33,3 +33,6 @@ set(MCUBOOT_DATA_SHARING                ON          CACHE BOOL      "Add sharing
 set(NU_HXT_PRESENT          OFF     CACHE BOOL      "Whether high-speed external crystal oscillator HXT is present")
 set(NU_UPDATE_STAGE_SDH     ON      CACHE BOOL      "Whether enable SDH as update staging area")
 set(NU_UPDATE_STAGE_FLASH   OFF     CACHE BOOL      "Whether enable embedded flash as update staging area")
+
+set(TFM_PSA_API                         ON          CACHE BOOL      "Use PSA api (IPC mode) instead of secure library mode")
+set(TFM_ISOLATION_LEVEL                 2           CACHE STRING    "Isolation level")
