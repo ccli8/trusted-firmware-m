@@ -144,6 +144,8 @@ target_compile_definitions(platform_s
         $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_ENA_TIMEOUT=1>
         $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_INIT_GUARD=1>    # Cover upper layer missing doing SDH initialization
         $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
+    PRIVATE
+        $<$<BOOL:${TFM_PERIPH_ACCESS_TEST}>:TFM_ENABLE_PERIPH_ACCESS_TEST>
 )
 
 #========================= Platform Non-Secure ================================#
