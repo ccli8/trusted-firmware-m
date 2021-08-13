@@ -11,7 +11,7 @@
 #include "tfm_plat_test.h"
 #include "device_definition.h"
 
-#define USERLED_MASK                (0x3)
+#define USERLED_MASK                (0x4)
 #define BTN_WAIT_INIT_COUNTER_VALUE (10000u)
 #define TIMER_RELOAD_VALUE          (12000000)
 
@@ -39,12 +39,12 @@ void tfm_plat_test_wait_user_button_released(void)
 
 uint32_t tfm_plat_test_get_led_status(void)
 {
-    return PD2;
+    return PD2 ? USERLED_MASK : 0;
 }
 
 void tfm_plat_test_set_led_status(uint32_t status)
 {
-    PD2 = status;
+    PD2 = (status & USERLED_MASK) ? 1 : 0;
 }
 
 uint32_t tfm_plat_test_get_userled_mask(void)
