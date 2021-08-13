@@ -225,7 +225,7 @@ void SystemInit (void)
 #ifdef TFM_ENABLE_PERIPH_ACCESS_TEST
   /* PD2 LED */
   PD2 = 1;
-  PD->MODE = (PD->MODE & (~(0x3 << 2))) | (1 << 2);
+  PD->MODE = (PD->MODE & (~(0x3 << 4))) | (1 << 4);
 #endif
 
   /* Configure NSCBA programmatic
