@@ -220,6 +220,12 @@ static int32_t ARM_SDH_Flash0_Initialize(ARM_Flash_SignalEvent_t cb_event)
 
     SDH_FLASH0_DEV.data->sector_count = SDH_FLASH0_DEV.sdh_info->totalSectorN;
 
+#if NU_SDH_ENA_TIMEOUT
+    /* Timeout too short even though TOUT is maximum.
+     * Get around by lowering SDH engine clock. */
+    SDH_Set_clock(SDH_FLASH0_DEV.sdh_base, 10000);
+#endif
+
     return ARM_DRIVER_OK;
 }
 
@@ -280,6 +286,10 @@ static int32_t ARM_SDH_Flash0_ReadData(uint32_t addr, void *data, uint32_t cnt)
         uint32_t end_sector = (addr_pos + todo_size - 1 + SDH_SECTOR_SIZE) / SDH_SECTOR_SIZE;
 
         if (SDH_Read(SDH_FLASH0_DEV.sdh_base, dma_buff, begin_sector, end_sector - begin_sector) != 0) {
+#if NU_SDH_INIT_GUARD
+            /* Re-initialize SDH */
+            SDH_FLASH0_DEV.data->sector_count = 0;
+#endif
             return ARM_DRIVER_ERROR;
         }
 
@@ -326,6 +336,10 @@ static int32_t ARM_SDH_Flash0_ProgramData(uint32_t addr, const void *data, uint3
         uint32_t end_sector = (addr_pos + todo_size - 1 + SDH_SECTOR_SIZE) / SDH_SECTOR_SIZE;
 
         if (SDH_Read(SDH_FLASH0_DEV.sdh_base, dma_buff, begin_sector, end_sector - begin_sector) != 0) {
+#if NU_SDH_INIT_GUARD
+            /* Re-initialize SDH */
+            SDH_FLASH0_DEV.data->sector_count = 0;
+#endif
             return ARM_DRIVER_ERROR;
         }
 
@@ -345,6 +359,10 @@ static int32_t ARM_SDH_Flash0_ProgramData(uint32_t addr, const void *data, uint3
 #endif
 
         if (SDH_Write(SDH_FLASH0_DEV.sdh_base, dma_buff, begin_sector, end_sector - begin_sector) != 0) {
+#if NU_SDH_INIT_GUARD
+            /* Re-initialize SDH */
+            SDH_FLASH0_DEV.data->sector_count = 0;
+#endif
             return ARM_DRIVER_ERROR;
         }
 
@@ -378,6 +396,10 @@ static int32_t ARM_SDH_Flash0_EraseSector(uint32_t addr)
     memset(dma_buff, SDH_FLASH0_DEV.data->erased_value, SDH_SECTOR_SIZE);
 
     if (SDH_Write(SDH_FLASH0_DEV.sdh_base, dma_buff, addr / SDH_SECTOR_SIZE, 1) != 0) {
+#if NU_SDH_INIT_GUARD
+            /* Re-initialize SDH */
+            SDH_FLASH0_DEV.data->sector_count = 0;
+#endif
         return ARM_DRIVER_ERROR;
     }
 
