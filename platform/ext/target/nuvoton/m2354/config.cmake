@@ -8,11 +8,22 @@
 #-------------------------------------------------------------------------------
 
 set(MCUBOOT_IMAGE_NUMBER    2      CACHE STRING    "Whether to combine S and NS into either 1 image, or sign each separately")
+
+# TFM_SP_PS_TEST test will break when PS_NUM_ASSETS is enlarged to some value.
+# https://developer.trustedfirmware.org/T956
+if (${TEST_S} OR ${TEST_NS})
+set(PS_MAX_ASSET_SIZE       1536   CACHE STRING    "The maximum asset size to be stored in the Protected Storage area")
+set(PS_NUM_ASSETS           10     CACHE STRING    "The maximum number of assets to be stored in the Protected Storage area")
+set(ITS_MAX_ASSET_SIZE      512    CACHE STRING    "The maximum asset size to be stored in the Internal Trusted Storage area")
+set(ITS_NUM_ASSETS          15     CACHE STRING    "The maximum number of assets to be stored in the Internal Trusted Storage area")
+set(BL2_TRAILER_SIZE        0x800  CACHE STRING    "Trailer size")
+else()
 set(PS_MAX_ASSET_SIZE       1536   CACHE STRING    "The maximum asset size to be stored in the Protected Storage area")
 set(PS_NUM_ASSETS           45     CACHE STRING    "The maximum number of assets to be stored in the Protected Storage area")
 set(ITS_MAX_ASSET_SIZE      512    CACHE STRING    "The maximum asset size to be stored in the Internal Trusted Storage area")
 set(ITS_NUM_ASSETS          15     CACHE STRING    "The maximum number of assets to be stored in the Internal Trusted Storage area")
 set(BL2_TRAILER_SIZE        0x800  CACHE STRING    "Trailer size")
+endif()
 
 set(CONFIG_TFM_USE_TRUSTZONE ON    CACHE BOOL      "Enable use of TrustZone to transition between NSPE and SPE")
 set(TFM_MULTI_CORE_TOPOLOGY  OFF   CACHE BOOL      "Whether to build for a dual-cpu architecture")
