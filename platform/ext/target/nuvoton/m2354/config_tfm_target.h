@@ -9,32 +9,53 @@
 #define __CONFIG_TFM_TARGET_H__
 
 /* The maximum asset size to be stored in the Internal Trust Storage area. */
+#if !NU_DONT_ORIDE_ITS_PS_ASSET
 #if ITS_MAX_ASSET_SIZE != 512
 #pragma message("ITS_MAX_ASSET_SIZE is redefined to 512.")
 #undef ITS_MAX_ASSET_SIZE
 #endif
 #define ITS_MAX_ASSET_SIZE      512
+#endif
 
 /* The maximum number of assets to be stored in the Internal Trust Storage area. */
+#if !NU_DONT_ORIDE_ITS_PS_ASSET
 #if ITS_NUM_ASSETS != 15
 #pragma message("ITS_NUM_ASSETS is redefined to 15.")
 #undef ITS_NUM_ASSETS
 #endif
 #define ITS_NUM_ASSETS          15
+#endif
 
 /* The maximum asset size to be stored in the Protected Storage area. */
+#if !NU_DONT_ORIDE_ITS_PS_ASSET
 #if PS_MAX_ASSET_SIZE != 1536
 #pragma message("PS_MAX_ASSET_SIZE is redefined to 1536.")
 #undef PS_MAX_ASSET_SIZE
 #endif
 #define PS_MAX_ASSET_SIZE       1536
+#else
+/* Defaulting to e.g. 2048 and its_flash_fs_validate_config() failure
+ *
+ * With PS on embedded flash and its block size being only 2KiB on M2354, larger
+ * PS_MAX_ASSET_SIZE can cause its_flash_fs_validate_config() to fail. For example,
+ * the precondition max file size (derived from PS_MAX_ASSET_SIZE) < flash block size
+ * can break. Check PS_MAX_OBJECT_SIZE for details.
+ */
+#if PS_MAX_ASSET_SIZE != 1536
+#pragma message("PS_MAX_ASSET_SIZE is redefined to 1536 to pass its_flash_fs_validate_config().")
+#undef PS_MAX_ASSET_SIZE
+#endif
+#define PS_MAX_ASSET_SIZE       1536
+#endif
 
 /* The maximum number of assets to be stored in the Protected Storage area. */
+#if !NU_DONT_ORIDE_ITS_PS_ASSET
 #if PS_NUM_ASSETS != 45
 #pragma message("PS_NUM_ASSETS is redefined to 45.")
 #undef PS_NUM_ASSETS
 #endif
 #define PS_NUM_ASSETS           45
+#endif
 
 /* Enlarge dedicated heap more for mbedtls_calloc()
  *
