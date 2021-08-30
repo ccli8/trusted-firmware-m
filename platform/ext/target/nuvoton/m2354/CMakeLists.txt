@@ -237,3 +237,10 @@ target_sources(tfm_spm
         ../common/tfm_hal_platform.c
         ../common/faults.c
 )
+
+# TFM_SP_PS_TEST test will break when PS_NUM_ASSETS is enlarged to some value.
+# https://developer.trustedfirmware.org/T956
+target_compile_definitions(tfm_config
+    INTERFACE
+        $<$<OR:$<BOOL:${TEST_S}>,$<BOOL:${TEST_NS}>>:NU_DONT_ORIDE_ITS_PS_ASSET=1>
+)
