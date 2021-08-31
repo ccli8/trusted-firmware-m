@@ -105,6 +105,7 @@ static const nu_modidx_ns_t modidx_ns_tab[] = {
     {ECAP1_RST,             ECAP1_MODULE,           SCU_INIT_PNSSET5_VAL & (1 << 21)},
     {TRNG_RST,              TRNG_MODULE,            SCU_INIT_PNSSET5_VAL & (1 << 25)},
     {LCD_RST,               LCD_MODULE,             SCU_INIT_PNSSET5_VAL & (1 << 27)},
+    {NU_SYS_MODIDX_UNDEF,   LCDCP_MODULE,           SCU_INIT_PNSSET5_VAL & (1 << 27)},
 #endif
 
 #if defined(SCU_INIT_PNSSET6_VAL) && SCU_INIT_PNSSET6_VAL
