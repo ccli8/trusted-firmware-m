@@ -247,10 +247,14 @@ void SystemInit_1(void)
   CLK->CLKDIV0 = 0;
 
   /* Enable IP clock */
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
   CLK->APBCLK0 |= CLK_APBCLK0_UART0CKEN_Msk | CLK_APBCLK0_TMR0CKEN_Msk | CLK_APBCLK0_TMR2CKEN_Msk;
+#endif
 
   /* Select UART clock source */
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
   CLK->CLKSEL2 = (CLK->CLKSEL2 & (~CLK_CLKSEL2_UART0SEL_Msk)) | CLK_CLKSEL2_UART0SEL_HIRC;
+#endif
 
   /* Timer clock source */
   CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR0SEL_Msk)) | CLK_CLKSEL1_TMR0SEL_HIRC;
@@ -259,10 +263,16 @@ void SystemInit_1(void)
 #endif
 
   /* Set multi-function pins for UART0 RXD and TXD */
+#if NU_TGT_NUMAKER_M2354
   SYS->GPA_MFPL = (SYS->GPA_MFPL & (~(UART0_RXD_PA6_Msk | UART0_TXD_PA7_Msk))) | UART0_RXD_PA6 | UART0_TXD_PA7;
+#elif NU_TGT_NUMAKER_IOT_M2354
+  SYS->GPB_MFPH = (SYS->GPB_MFPH & (~(UART0_RXD_PB8_Msk | UART0_TXD_PB9_Msk))) | UART0_RXD_PB8 | UART0_TXD_PB9;
+#endif
 
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
   /* Set UART 0 to Non-secure */
   SCU_SET_PNSSET(UART0_Attr);
+#endif
 
   /* Set SAU */
   SAU->RNR = 3;

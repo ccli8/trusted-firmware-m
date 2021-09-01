@@ -153,8 +153,10 @@ enum tfm_plat_err_t system_reset_cfg(void)
 
 enum tfm_plat_err_t init_debug(void)
 {
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
     /* Set UART0 to NS for debug message */
     SCU_SET_PNSSET(UART0_Attr);
+#endif
 
     return TFM_PLAT_ERR_SUCCESS;
 }
@@ -341,8 +343,10 @@ enum tfm_plat_err_t mpc_init_cfg(void)
     SCU->PVIOIEN = (uint32_t)(-1);
     NVIC_EnableIRQ(SCU_IRQn);
 
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
     /* Set UART0 for Non-secure */
     SCU_SET_PNSSET(UART0_Attr);
+#endif
 
     /* Set TIMER2 for Non-secure */
     SCU_SET_PNSSET(TMR23_Attr);
