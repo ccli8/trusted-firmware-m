@@ -37,3 +37,7 @@ set(NU_UPDATE_STAGE_FLASH   OFF     CACHE BOOL      "Whether enable embedded fla
 set(TFM_PSA_API                         ON          CACHE BOOL      "Use PSA api (IPC mode) instead of secure library mode")
 set(TFM_ISOLATION_LEVEL                 2           CACHE STRING    "Isolation level")
 set(MCUBOOT_LOG_LEVEL                   "INFO"      CACHE STRING    "Level of logging to use for MCUboot [OFF, ERROR, WARNING, INFO, DEBUG]" FORCE)
+
+# Target board
+set(NU_TGT_NUMAKER_M2354                ON          CACHE BOOL      "Build for NuMaker-M2354 board")
+set(NU_TGT_NUMAKER_IOT_M2354            OFF         CACHE BOOL      "Build for NuMaker-IoT-M2354 board")
