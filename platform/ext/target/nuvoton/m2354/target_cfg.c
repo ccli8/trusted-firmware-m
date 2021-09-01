@@ -93,12 +93,14 @@ extern ARM_DRIVER_MPC Driver_SRAM1_MPC, Driver_SRAM2_MPC;
 #define All_SEL_STATUS (SPNIDEN_SEL_STATUS | SPIDEN_SEL_STATUS | \
                         NIDEN_SEL_STATUS | DBGEN_SEL_STATUS)
 
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
 struct platform_data_t tfm_peripheral_std_uart = {
         UART0_BASE+NS_OFFSET,
         UART0_BASE+NS_OFFSET+0xFFF,
         PPC_SP_DO_NOT_CONFIGURE,
         -1
 };
+#endif
 
 struct platform_data_t tfm_peripheral_uart1 = {
         UART1_BASE,
@@ -425,8 +427,10 @@ int32_t mpc_init_cfg(void)
     SCU->PVIOIEN = (uint32_t)(-1);
     NVIC_EnableIRQ(SCU_IRQn);
 
+#if NU_TGT_NUMAKER_M2354 || NU_TGT_NUMAKER_IOT_M2354
     /* Set UART0 for Non-secure */
     SCU_SET_PNSSET(UART0_Attr);
+#endif
 
     /* Set TIMER2 for Non-secure */
     SCU_SET_PNSSET(TMR23_Attr);
