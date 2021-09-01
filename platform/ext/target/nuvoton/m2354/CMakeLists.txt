@@ -144,6 +144,8 @@ target_compile_definitions(platform_s
         $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_ENA_TIMEOUT=1>
         $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_INIT_GUARD=1>    # Cover upper layer missing doing SDH initialization
         $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
+        $<$<BOOL:${NU_TGT_NUMAKER_M2354}>:NU_TGT_NUMAKER_M2354=1>
+        $<$<BOOL:${NU_TGT_NUMAKER_IOT_M2354}>:NU_TGT_NUMAKER_IOT_M2354=1>
     PRIVATE
         $<$<BOOL:${TFM_PERIPH_ACCESS_TEST}>:TFM_ENABLE_PERIPH_ACCESS_TEST>
 )
@@ -184,6 +186,8 @@ target_compile_definitions(platform_ns
     PUBLIC
         NU_TFM_PLAT_IOCTL_NS=1
         $<$<BOOL:${NU_HXT_PRESENT}>:NU_HXT_PRESENT=1>
+        $<$<BOOL:${NU_TGT_NUMAKER_M2354}>:NU_TGT_NUMAKER_M2354=1>
+        $<$<BOOL:${NU_TGT_NUMAKER_IOT_M2354}>:NU_TGT_NUMAKER_IOT_M2354=1>
 )
 
 #========================= Platform BL2 =======================================#
@@ -233,5 +237,7 @@ if(BL2)
             $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_ENA_TIMEOUT=1>
             $<$<BOOL:${NU_UPDATE_STAGE_SDH}>:NU_SDH_DUMMY_ON_ABSENT=1>   # Simulate dummy SD card on detached because MCUboot will panic on read failure
             $<$<BOOL:${NU_UPDATE_STAGE_FLASH}>:NU_UPDATE_STAGE_FLASH=1>
+            $<$<BOOL:${NU_TGT_NUMAKER_M2354}>:NU_TGT_NUMAKER_M2354=1>
+            $<$<BOOL:${NU_TGT_NUMAKER_IOT_M2354}>:NU_TGT_NUMAKER_IOT_M2354=1>
     )
 endif()
