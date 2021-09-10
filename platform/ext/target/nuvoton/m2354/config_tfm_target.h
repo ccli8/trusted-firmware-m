@@ -10,20 +10,20 @@
 
 /* The maximum asset size to be stored in the Internal Trust Storage area. */
 #if !NU_DONT_ORIDE_ITS_PS_ASSET
-#if ITS_MAX_ASSET_SIZE != 512
-#pragma message("ITS_MAX_ASSET_SIZE is redefined to 512.")
+#if ITS_MAX_ASSET_SIZE != 1536
+#pragma message("ITS_MAX_ASSET_SIZE is redefined to 1536.")
 #undef ITS_MAX_ASSET_SIZE
 #endif
-#define ITS_MAX_ASSET_SIZE      512
+#define ITS_MAX_ASSET_SIZE      1536
 #endif
 
 /* The maximum number of assets to be stored in the Internal Trust Storage area. */
 #if !NU_DONT_ORIDE_ITS_PS_ASSET
-#if ITS_NUM_ASSETS != 15
-#pragma message("ITS_NUM_ASSETS is redefined to 15.")
+#if ITS_NUM_ASSETS != 30
+#pragma message("ITS_NUM_ASSETS is redefined to 30.")
 #undef ITS_NUM_ASSETS
 #endif
-#define ITS_NUM_ASSETS          15
+#define ITS_NUM_ASSETS          30
 #endif
 
 /* The maximum asset size to be stored in the Protected Storage area. */
@@ -63,11 +63,11 @@
  * Check mbedtls_memory_buffer_alloc_init() in below:
  * trusted-firmware-m/secure_fw/partitions/crypto/crypto_init.c
  */
-#if CRYPTO_ENGINE_BUF_SIZE != 0x2800
-#pragma message("CRYPTO_ENGINE_BUF_SIZE is redefined to 0x2800.")
+#if CRYPTO_ENGINE_BUF_SIZE != 0x4000
+#pragma message("CRYPTO_ENGINE_BUF_SIZE is redefined to 0x4000.")
 #undef CRYPTO_ENGINE_BUF_SIZE
 #endif
-#define CRYPTO_ENGINE_BUF_SIZE  0x2800
+#define CRYPTO_ENGINE_BUF_SIZE  0x4000
 
 /* Without H/W entropy like TRNG, use stored NV seed to provide entropy */
 #if CRYPTO_HW_ACCELERATOR
