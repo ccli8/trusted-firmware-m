@@ -206,7 +206,7 @@ void tfm_arch_set_secure_exception_priorities(void)
      * number up to the value 0x80.
      * For this reason, set the priority of the PendSV interrupt to 0x80.
      */
-    NVIC_SetPriority(PendSV_IRQn, 1 << (__NVIC_PRIO_BITS - 1));
+    NVIC_SetPriority(PendSV_IRQn, (1 << (__NVIC_PRIO_BITS - 1)) - 1);
 #endif
 }
 
