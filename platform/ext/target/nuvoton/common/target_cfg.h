@@ -18,18 +18,16 @@
 #define __TARGET_CFG_H__
 
 #include <stdint.h>
+#include "tfm_plat_defs.h"
 
 #define TFM_DRIVER_STDIO    Driver_USART0
 #define NS_DRIVER_STDIO     Driver_USART0
 
 enum ppc_bank_e {
     PPC_SP_DO_NOT_CONFIGURE = -1,
-    PPC_SP_AHB_PPC_EXP0 = 0,
-    PPC_SP_APB_PPC      = 1,
-    PPC_SP_APB_PPC_EXP0 = 2,
-    PPC_SP_APB_PPC_EXP1 = 3,
-    PPC_SP_APB_PPC_EXP2 = 4,
-    PPC_SP_APB_PPC_EXP3 = 5,
+    /* Hijack to specify SCU PNSSETx/PNPSETx */
+    PPC_SP_SCU_PNSSET = 0,
+    PPC_SP_SCU_PNPSET = 1,
 };
 
 /**

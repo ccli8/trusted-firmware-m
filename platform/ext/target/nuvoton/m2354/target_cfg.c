@@ -360,18 +360,22 @@ enum tfm_plat_err_t ppc_init_cfg(void)
 
 void ppc_configure_to_secure(enum ppc_bank_e bank, uint32_t pos)
 {
+    SCU->PNSSET[(pos)/32] &= ~(1 << ((pos) & 0x1ful));
 }
 
 void ppc_configure_to_non_secure(enum ppc_bank_e bank, uint32_t pos)
 {
+    SCU->PNSSET[(pos)/32] |= (1 << ((pos) & 0x1ful));
 }
 
 void ppc_en_secure_unpriv(enum ppc_bank_e bank, uint16_t pos)
 {
+    SCU->PNPSET[(pos)/32] |= (1 << ((pos) & 0x1ful));
 }
 
 void ppc_clr_secure_unpriv(enum ppc_bank_e bank, uint16_t pos)
 {
+    SCU->PNPSET[(pos)/32] &= ~(1 << ((pos) & 0x1ful));
 }
 
 void ppc_clear_irq(void)
