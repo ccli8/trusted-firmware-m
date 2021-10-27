@@ -32,6 +32,7 @@
 enum ppc_bank_e
 {
     PPC_SP_DO_NOT_CONFIGURE = -1,
+#if 0
     PPC_SP_AHB_PPC0 = 0,
     PPC_SP_RES0,
     PPC_SP_RES1,
@@ -48,6 +49,11 @@ enum ppc_bank_e
     PPC_SP_APB_PPC_EXP1,
     PPC_SP_APB_PPC_EXP2,
     PPC_SP_APB_PPC_EXP3,
+#else
+    /* Hijack to specify SCU PNSSETx/PNPSETx */
+    PPC_SP_SCU_PNSSET = 0,
+    PPC_SP_SCU_PNPSET = 1,
+#endif
 };
 
 /**
