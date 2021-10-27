@@ -38,6 +38,7 @@ if(BL2)
         PUBLIC
             bl2_crypto_hw
     )
+
     target_include_directories(bl2_mbedcrypto
         PUBLIC
             ${PLATFORM_DIR}/ext/target/${TFM_PLATFORM}/accelerator/
@@ -57,6 +58,7 @@ endif()
 target_sources(crypto_service_crypto_hw
     PRIVATE
         ${PLATFORM_DIR}/ext/target/nuvoton/common/accelerator/entropy_alt.c
+        ${PLATFORM_DIR}/ext/target/nuvoton/common/accelerator/huk.c
         ${PLATFORM_DIR}/ext/target/nuvoton/common/accelerator/nuvoton.c
 )
 
@@ -71,6 +73,7 @@ target_include_directories(crypto_service_crypto_hw
         ${PLATFORM_DIR}/ext/target/${TFM_PLATFORM}/../common/bsp/Include
         ${PLATFORM_DIR}/ext/target/${TFM_PLATFORM}/../common/bsp/StdDriver/inc
         ${PLATFORM_DIR}/ext/cmsis
+        ${PLATFORM_DIR}/include
 )
 
 target_include_directories(crypto_service_mbedcrypto
@@ -90,4 +93,12 @@ target_link_libraries(crypto_service_crypto_hw
     PRIVATE
         crypto_service_mbedcrypto
         platform_s
+)
+# Fix undefined reference to `mbedtls_hkdf' in function `crypto_hw_accelerator_huk_derive_key'
+#
+# For STATIC libraries with cyclic dependencies, the linker may need to scan
+# more than once through the archives. While one repetition is usually sufficient,
+# pathological object file and symbol arrangements can require more.
+set_target_properties(crypto_service_crypto_hw PROPERTIES
+    LINK_INTERFACE_MULTIPLICITY 3
 )
