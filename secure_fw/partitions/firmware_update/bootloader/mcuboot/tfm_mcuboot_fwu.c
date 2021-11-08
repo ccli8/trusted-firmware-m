@@ -481,6 +481,8 @@ psa_status_t fwu_bootloader_mark_image_accepted(
     if (boot_set_confirmed_multi(mcuboot_image_id) != 0) {
         return PSA_ERROR_GENERIC_ERROR;
     }
+
+    return PSA_SUCCESS;
 #else
     (void)bootloader_image_id;
     return PSA_SUCCESS;

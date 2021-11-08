@@ -123,10 +123,10 @@ add_custom_command(OUTPUT tfm_s_signed.bin
         --layout $<TARGET_OBJECTS:signing_layout_s>
         -k ${MCUBOOT_KEY_S}
         --public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
-        --align 1
+        --align 4
         --pad
         --pad-header
-        -H 0x400
+        -H 0x1000
         -s ${MCUBOOT_SECURITY_COUNTER_S}
         -d \"\(1,${MCUBOOT_NS_IMAGE_MIN_VER}\)\"
         $<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},OVERWRITE_ONLY>:--overwrite-only>
@@ -173,10 +173,10 @@ if(NS)
             --layout $<TARGET_OBJECTS:signing_layout_ns>
             -k ${MCUBOOT_KEY_NS}
             --public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
-            --align 1
+            --align 4
             --pad
             --pad-header
-            -H 0x400
+            -H 0x1000
             -s ${MCUBOOT_SECURITY_COUNTER_NS}
             -d \"\(0, ${MCUBOOT_S_IMAGE_MIN_VER}\)\"
             $<TARGET_FILE_DIR:tfm_ns>/tfm_ns.bin
@@ -222,10 +222,10 @@ if(NS)
             --layout $<TARGET_OBJECTS:signing_layout_s>
             -k $<IF:$<BOOL:${FORWARD_PROT_MSG}>,${MCUBOOT_KEY_NS},${MCUBOOT_KEY_S}>
             --public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
-            --align 1
+            --align 4
             --pad
             --pad-header
-            -H 0x400
+            -H 0x1000
             -s ${MCUBOOT_SECURITY_COUNTER_S}
             $<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},OVERWRITE_ONLY>:--overwrite-only>
             $<$<BOOL:${MCUBOOT_ENC_IMAGES}>:-E${MCUBOOT_KEY_ENC}>
