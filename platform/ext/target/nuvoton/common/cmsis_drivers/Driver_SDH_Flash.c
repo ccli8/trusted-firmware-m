@@ -52,6 +52,20 @@
 #define NU_SDH_FLASH_PROG_ATR       1
 #endif
 
+/* Emulate Flash erase unit of specified size
+ *
+ * Reasons for wrapping SDH Flash sector size same as internal Flash:
+ * 1. According to the bug report, flash_area_get_sectors() doesn't support
+ *    external Flash. As workaround, wrap SDH Flash sector size same as internal Flash.
+ *    https://developer.trustedfirmware.org/T976
+ * 2. According to code fragment below, boot_slots_compatible() can fail because BOOT_MAX_IMG_SECTORS is based on internal Flash sector, with which num_sectors_secondary, for external Flash, is incompatible.
+ *    https://github.com/mcu-tools/mcuboot/blob/9eff1e08bd13ca9f0723f06aa7b386f09828956a/boot/bootutil/src/swap_scratch.c#L185-L189
+ * NOTE: The above bugs can counteract and result in no error.
+ */
+#ifndef NU_SDH_FLASH_SECTOR_SIZE
+#define NU_SDH_FLASH_SECTOR_SIZE    FLASH_AREA_IMAGE_SECTOR_SIZE
+#endif
+
 #ifndef ARG_UNUSED
 #define ARG_UNUSED(arg)  ((void)arg)
 #endif
@@ -119,6 +133,13 @@ static const ARM_FLASH_CAPABILITIES DriverCapabilities =
 #define DMA_BUFF_SIZE       SDH_SECTOR_SIZE
 __attribute__((aligned(4))) static uint8_t dma_buff[DMA_BUFF_SIZE];
 
+/* SDH Flash sector size must be a multiple of SDH sector size. */
+_Static_assert((NU_SDH_FLASH_SECTOR_SIZE % SDH_SECTOR_SIZE) == 0,
+               "NU_SDH_FLASH_SECTOR_SIZE must a multiple of SDH_SECTOR_SIZE");
+/* DMA buffer size must be a multiple of SDH sector size. */
+_Static_assert((DMA_BUFF_SIZE % SDH_SECTOR_SIZE) == 0,
+               "DMA_BUFF_SIZE must a multiple of SDH_SECTOR_SIZE");
+
 static int32_t is_range_valid(struct sdh_flash_dev_t *flash_dev,
                               uint32_t addr,
                               uint32_t cnt)
@@ -126,8 +147,8 @@ static int32_t is_range_valid(struct sdh_flash_dev_t *flash_dev,
     uint32_t sector_size = flash_dev->data->sector_size;
     uint32_t sector_count = flash_dev->data->sector_count;
 
-    return !((sector_size == SDH_SECTOR_SIZE) &&
-        ((addr + cnt) / SDH_SECTOR_SIZE <= sector_count));
+    return !((sector_size == NU_SDH_FLASH_SECTOR_SIZE) &&
+        ((addr + cnt) / NU_SDH_FLASH_SECTOR_SIZE <= sector_count));
 }
 
 #if (RTE_SDH_FLASH0)
@@ -137,7 +158,7 @@ static struct _ARM_FLASH_INFO SDH_FLASH0_DEV_DATA =
 {
     .sector_info  = NULL,               // Uniform sector layout
     .sector_count = 0,                  // Will fix in SD probe
-    .sector_size  = SDH_SECTOR_SIZE,
+    .sector_size  = NU_SDH_FLASH_SECTOR_SIZE,
     .page_size    = 4,
     .program_unit = 4,
     .erased_value = 0xFF
@@ -218,7 +239,7 @@ static int32_t ARM_SDH_Flash0_Initialize(ARM_Flash_SignalEvent_t cb_event)
 #endif
     }
 
-    SDH_FLASH0_DEV.data->sector_count = SDH_FLASH0_DEV.sdh_info->totalSectorN;
+    SDH_FLASH0_DEV.data->sector_count = SDH_FLASH0_DEV.sdh_info->totalSectorN / (NU_SDH_FLASH_SECTOR_SIZE / SDH_SECTOR_SIZE);
 
 #if NU_SDH_ENA_TIMEOUT
     /* Timeout too short even though TOUT is maximum.
@@ -395,12 +416,17 @@ static int32_t ARM_SDH_Flash0_EraseSector(uint32_t addr)
 
     memset(dma_buff, SDH_FLASH0_DEV.data->erased_value, SDH_SECTOR_SIZE);
 
-    if (SDH_Write(SDH_FLASH0_DEV.sdh_base, dma_buff, addr / SDH_SECTOR_SIZE, 1) != 0) {
+    /* Simulate flash sector erase */
+    uint32_t addr_pos = addr / NU_SDH_FLASH_SECTOR_SIZE * NU_SDH_FLASH_SECTOR_SIZE;
+    uint32_t addr_end = addr_pos + NU_SDH_FLASH_SECTOR_SIZE;
+    for (; addr_pos < addr_end; addr_pos += SDH_SECTOR_SIZE) {
+        if (SDH_Write(SDH_FLASH0_DEV.sdh_base, dma_buff, addr_pos / SDH_SECTOR_SIZE, 1) != 0) {
 #if NU_SDH_INIT_GUARD
             /* Re-initialize SDH */
             SDH_FLASH0_DEV.data->sector_count = 0;
 #endif
-        return ARM_DRIVER_ERROR;
+            return ARM_DRIVER_ERROR;
+        }
     }
 
     return ARM_DRIVER_OK;
