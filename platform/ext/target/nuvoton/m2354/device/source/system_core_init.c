@@ -127,7 +127,64 @@ void SystemCoreClockUpdate (void)
 /*----------------------------------------------------------------------------
   System initialization function
  *----------------------------------------------------------------------------*/
-void SystemInit (void)
+
+/* Enable initial stack not located in SRAM bank0
+ *
+ * On reset, only SRAM bank0 is enabled. And SRAM bank1/2 will be enabled in
+ * immediately following SystemInit(). When initial stack is located in SRAM
+ * bank1/2, we will meet trouble because SystemInit() itself needs to use initial
+ * stack. To conquer the dilemma, we add preceding code in front of original
+ * Systeminit(), which is responsible for enabling SRAM bank1/2 and guarantees
+ * no using initial stack.
+ *
+ * SystemInit():
+ *  Implement in naked inline assembly to avoid use of initial stack
+ *  Enable SRAM bank1/2
+ *  Jump to SystemInit_1
+ *
+ * SystemInit_1()
+ *  Implement in C and will use initial stack
+ *  Do system initialization as original
+ */
+void SystemInit_1(void);
+
+/* Add '__attribute__((naked))' here to make sure compiler does not generate prologue and
+ * epilogue sequences for SystemInit(). We don't want initial stack is used here.
+ *
+ * Don't allow extended assembly in naked functions:
+ * The compiler only supports basic __asm statements in __attribute__((naked))
+ * functions. Using extended assembly, parameter references or mixing C code with
+ * __asm statements might not work reliably.
+ */
+__attribute__((naked)) void SystemInit(void)
+{
+#if defined(__GNUC__)
+    __asm(".syntax  unified                                         \n");
+#endif
+
+//#if __DOMAIN_NS == 0
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3L)
+    /* Enable SRAM bank1/2
+     *
+     * CLK->AHBCLK |= (CLK_AHBCLK_SRAM1CKEN_Msk | CLK_AHBCLK_SRAM2CKEN_Msk)
+     */
+    __asm("movw     r2, #0x200                                      \n");
+    __asm("movt     r2, #0x4000                                     \n");
+    __asm("ldr      r0, [r2, #4]                                    \n");
+    __asm("movw     r1, #0x0                                        \n");
+    __asm("movt     r1, #0x60                                       \n");
+    __asm("orrs     r0, r0, r1                                      \n");
+    __asm("str      r0, [r2, #4]                                    \n");
+#endif
+
+    /* Jump to SystemInit_1() */
+    __asm("movw     r0, #:lower16:SystemInit_1                      \n");
+    __asm("movt     r0, #:upper16:SystemInit_1                      \n");
+    __asm("bx       r0                                              \n");
+}
+
+/* Do system initialization as original SystemInit() */
+void SystemInit_1(void)
 {
 #if defined (__VTOR_PRESENT) && (__VTOR_PRESENT == 1U)
   extern uint32_t __Vectors;
