@@ -8,7 +8,6 @@
 #-------------------------------------------------------------------------------
 
 set(MCUBOOT_IMAGE_NUMBER    2      CACHE STRING    "Whether to combine S and NS into either 1 image, or sign each separately")
-set(BL2_TRAILER_SIZE        0x800  CACHE STRING    "Trailer size")
 
 set(CONFIG_TFM_USE_TRUSTZONE ON    CACHE BOOL      "Enable use of TrustZone to transition between NSPE and SPE")
 set(TFM_MULTI_CORE_TOPOLOGY  OFF   CACHE BOOL      "Whether to build for a dual-cpu architecture")
@@ -29,6 +28,42 @@ set(CRYPTO_NV_SEED                      OFF         CACHE BOOL      "Use stored 
 set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT  ON        CACHE BOOL      "Platform supports firmware update, such as network connectivities and bootloader support")
 set(TFM_PARTITION_FIRMWARE_UPDATE       ON          CACHE BOOL      "Enable firmware update partition")
 set(MCUBOOT_DATA_SHARING                ON          CACHE BOOL      "Add sharing of application specific data using the same shared data area as for the measured boot")
+# Change to "SWAP_USING_SCRATCH" for enabling firmware upgrade rollback
+set(MCUBOOT_UPGRADE_STRATEGY            "OVERWRITE_ONLY"    CACHE STRING    "Upgrade strategy for images")
+# BL2 can be unset yet at this stage. Default to enabled for below conditional code.
+# Can override through command line option or earlier set.
+set(BL2                                 ON          CACHE BOOL      "Whether to build BL2")
+# Evaluate image trailer size for 'SWAP_USING_SCRATCH' upgrade strategy
+#
+# Check the link below for necessary trailer size:
+# https://www.mcuboot.com/documentation/design/
+#
+# With the formula:
+# Swap status (BOOT_MAX_IMG_SECTORS * min-write-size * 3)
+#
+# Where for the platform:
+# BOOT_MAX_IMG_SECTORS = 512 (= 1MiB / 2KiB)
+# min-write-size = 4 bytes (per flash_area_align())
+# Swap status = 512 * 4 * 3 = 6KiB
+#
+# 6KiB plus other fields for image trailer plus TLV, we reserve 8KiB in total.
+#
+# Notes for above estimation:
+# 1. In image signing such as bl2/ext/mcuboot/CMakeLists.txt, `--align` must fix to 4 and `--max-sectors` must specify as 512 to catch trailer size overrun error.
+# 2. 2KiB is taken from smaller of internal/external Flash's sector sizes.
+# 3. Continuing above, SDH Flash's sector size should have adapted to larger from 512 bytes.
+# 4. BL2_TRAILER_SIZE must include TLV area, though not mentioned.
+# 5. For consistency, BL2_TRAILER_SIZE doesn't change across 'OVERWRITE_ONLY' and "SWAP_USING_SCRATCH" upgrade strategies.
+# 6. For consistency, (BL2_HEADER_SIZE + BL2_TRAILER_SIZE) doesn't change across w/ and w/o BL2.
+if(BL2)
+set(BL2_HEADER_SIZE                     0x1000 CACHE STRING "Header size")
+set(BL2_TRAILER_SIZE                    0x2000 CACHE STRING "Trailer size")
+set(MCUBOOT_ALIGN_VAL                   4      CACHE STRING "align option for mcuboot and build image with imgtool [1, 2, 4, 8, 16, 32]")
+else()
+# No header if no bootloader, but keep IMAGE_CODE_SIZE the same
+set(BL2_HEADER_SIZE                     0x0    CACHE STRING "Header size")
+set(BL2_TRAILER_SIZE                    0x3000 CACHE STRING "Trailer size")
+endif()
 
 set(NU_HXT_PRESENT          OFF     CACHE BOOL      "Whether high-speed external crystal oscillator HXT is present")
 set(NU_UPDATE_STAGE_SDH     ON      CACHE BOOL      "Whether enable SDH as update staging area")
