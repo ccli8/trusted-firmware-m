@@ -41,6 +41,8 @@ set(NU_UPDATE_STAGE_FLASH   OFF     CACHE BOOL      "Whether enable embedded fla
 set(TFM_PSA_API                         ON          CACHE BOOL      "Use PSA api (IPC mode) instead of secure library mode")
 set(TFM_ISOLATION_LEVEL                 2           CACHE STRING    "Isolation level")
 set(MCUBOOT_LOG_LEVEL                   "INFO"      CACHE STRING    "Level of logging to use for MCUboot [OFF, ERROR, WARNING, INFO, DEBUG]" FORCE)
+set(TFM_SPM_LOG_LEVEL                   TFM_SPM_LOG_LEVEL_INFO          CACHE STRING    "Set default SPM log level as INFO level" FORCE)
+set(TFM_PARTITION_LOG_LEVEL             TFM_PARTITION_LOG_LEVEL_INFO    CACHE STRING    "Set default Secure Partition log level as INFO level" FORCE)
 
 # Target board
 set(NU_TGT_NUMAKER_M2354                ON          CACHE BOOL      "Build for NuMaker-M2354 board")
