@@ -391,6 +391,9 @@ void SystemInit_1(void)
     SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     CLK->PWRCTL &= ~CLK_PWRCTL_PDEN_Msk;
 
+    // Default role of USB to On-The-Go device mode
+    SYS->USBPHY = (SYS->USBPHY & ~SYS_USBPHY_USBROLE_Msk) | SYS_USBPHY_OTGPHYEN_Msk | SYS_USBPHY_SBO_Msk;
+
 #endif
 
  
