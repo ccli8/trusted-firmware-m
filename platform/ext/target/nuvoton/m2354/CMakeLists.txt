@@ -157,6 +157,10 @@ if(BL2)
         PUBLIC
             ${COMPILER_CMSE_FLAG}
     )
+    target_compile_definitions(platform_bl2
+        PRIVATE
+            $<$<BOOL:${BL2}>:BL2>
+    )
 endif()
 
 #========================= tfm_spm ============================================#
