@@ -31,6 +31,11 @@ extern uint32_t SystemCoreClock;  /*!< System Clock Frequency (Core Clock)  */
 extern uint32_t PeripheralClock;  /*!< Peripheral Clock Frequency */
 
 /**
+  \brief Exception / Interrupt Handler Function Prototype
+*/
+typedef void(*VECTOR_TABLE_Type)(void);
+
+/**
  * \brief  Initializes the system
  */
 extern void SystemInit(void);
