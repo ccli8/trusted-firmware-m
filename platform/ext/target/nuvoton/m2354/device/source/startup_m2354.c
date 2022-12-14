@@ -290,7 +290,9 @@ void Reset_Handler(void)
     __set_MSPLIM((uint32_t)(&__STACK_LIMIT));
     __set_PSPLIM((uint32_t)(&__STACK_LIMIT));
 
+#if !defined(BL2)
     __TZ_set_STACKSEAL_S((uint32_t *)(&__STACK_SEAL));
+#endif
 #endif
 
     SystemInit();                             /* CMSIS System Initialization */
