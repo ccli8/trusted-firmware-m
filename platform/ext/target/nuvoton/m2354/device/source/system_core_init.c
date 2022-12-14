@@ -209,3 +209,14 @@ void SystemInit (void)
 
   SystemCoreClock = SYSTEM_CLOCK;
 }
+
+/* Return program counter for checking in secure/non-secure domain */
+__attribute__((naked)) uint32_t __PC(void)
+{
+#if defined(__GNUC__)
+    __asm(".syntax  unified                                         \n");
+#endif
+
+    __asm("mov      r0, lr                                          \n");
+    __asm("blx      lr                                              \n");
+}
