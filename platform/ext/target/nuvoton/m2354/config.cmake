@@ -13,3 +13,11 @@ set(BL2_TRAILER_SIZE        0x800  CACHE STRING    "Trailer size")
 # Platform-specific configurations
 set(CONFIG_TFM_USE_TRUSTZONE ON)
 set(TFM_MULTI_CORE_TOPOLOGY  OFF)
+
+# Enable partitions for default build
+# NOTE: Since TF-M v1.7, most partitions default to disabled.
+set(TFM_PARTITION_INTERNAL_TRUSTED_STORAGE ON       CACHE BOOL      "Enable Internal Trusted Storage partition")
+set(TFM_PARTITION_PROTECTED_STORAGE        ON       CACHE BOOL      "Enable Protected Storage partition")
+set(TFM_PARTITION_CRYPTO                   ON       CACHE BOOL      "Enable Crypto partition")
+set(TFM_PARTITION_INITIAL_ATTESTATION      ON       CACHE BOOL      "Enable Initial Attestation partition")
+set(TFM_PARTITION_PLATFORM                 ON       CACHE BOOL      "Enable Platform partition")
