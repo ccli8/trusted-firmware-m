@@ -299,3 +299,10 @@ target_include_directories(platform_region_defs
     INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/ext/common
 )
+
+if(NS)
+    target_sources(tfm_ns
+        PRIVATE
+            $<$<BOOL:${CONFIG_GNU_SYSCALL_STUB_ENABLED}>:${CMAKE_SOURCE_DIR}/platform/ext/common/syscalls_stub.c>
+    )
+endif()
