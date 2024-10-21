@@ -63,6 +63,10 @@ macro(tfm_toolchain_reset_linker_flags)
         LINKER:--gc-sections
         LINKER:--no-wchar-size-warning
         LINKER:--print-memory-usage
+        # Warning: <file> has a LOAD segment with RWX permissions
+        # See: https://stackoverflow.com/questions/73429929/gnu-linker-elf-has-a-load-segment-with-rwx-permissions-embedded-arm-project
+        #      https://www.redhat.com/en/blog/linkers-warnings-about-executable-stacks-and-segments
+        LINKER:--no-warn-rwx-segments
     )
 endmacro()
 
@@ -112,6 +116,9 @@ macro(tfm_toolchain_set_processor_arch)
 endmacro()
 
 macro(tfm_toolchain_reload_compiler)
+    # CMAKE_C_COMPILER_VERSION is not guaranteed to be defined.
+    EXECUTE_PROCESS( COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION )
+
     tfm_toolchain_set_processor_arch()
     tfm_toolchain_reset_compiler_flags()
     tfm_toolchain_reset_linker_flags()
@@ -120,6 +127,17 @@ macro(tfm_toolchain_reload_compiler)
         message(FATAL_ERROR "GNU Arm compiler version 10-2020-q4-major has an issue in CMSE support."
                             " Select other GNU Arm compiler versions instead."
                             " See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99157 for the issue detail.")
+    endif()
+
+    # GNU Arm compiler version greater equal than *11.3.Rel1*
+    # has a linker issue that required system calls are missing,
+    # such as _read and _write. Add stub functions of required
+    # system calls to solve this issue.
+    #
+    # Warning: _close is not implemented and will always fail
+    # See: https://stackoverflow.com/questions/73742774/gcc-arm-none-eabi-11-3-is-not-implemented-and-will-always-fail
+    if (GCC_VERSION VERSION_GREATER_EQUAL 11.3.1)
+        set(CONFIG_GNU_SYSCALL_STUB_ENABLED TRUE)
     endif()
 
     unset(CMAKE_C_FLAGS_INIT)

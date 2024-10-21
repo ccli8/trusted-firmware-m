@@ -184,3 +184,10 @@ target_compile_definitions(platform_region_defs
         $<$<BOOL:${FORWARD_PROT_MSG}>:FORWARD_PROT_MSG=${FORWARD_PROT_MSG}>
         $<$<BOOL:${TFM_CODE_SHARING}>:CODE_SHARING>
 )
+
+if(NS)
+    target_sources(tfm_ns
+        PRIVATE
+            $<$<BOOL:${CONFIG_GNU_SYSCALL_STUB_ENABLED}>:${CMAKE_SOURCE_DIR}/platform/ext/common/syscalls_stub.c>
+    )
+endif()
