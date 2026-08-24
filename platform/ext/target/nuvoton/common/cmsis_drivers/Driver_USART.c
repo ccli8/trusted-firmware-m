@@ -20,7 +20,11 @@
 #include "Driver_USART.h"
 #include "NuMicro.h"
 #include "RTE_Device.h"
+#include "uart.h"
 
+#if defined(__M3351_H__)
+#include "system_M3351.h"
+#endif
 
 #ifndef ARG_UNUSED
 #define ARG_UNUSED(arg)  (void)arg
@@ -83,14 +87,27 @@ typedef struct
 
 static int32_t ARM_USARTx_Initialize(UARTx_Resources* uart_dev)
 {
-    /* Initializes generic UART driver */
+    if (uart_dev == NULL) {
+        return ARM_DRIVER_ERROR_PARAMETER;
+    }
+
+    uart_dev->tx_nbr_bytes = 0;
+    uart_dev->rx_nbr_bytes = 0;
+
+#if defined(__M3351_H__) && (!defined(DOMAIN_NS) || (DOMAIN_NS == 0))
+    SET_UART0_RXD_PB12();
+    SET_UART0_TXD_PB13();
+#endif
+
     return ARM_DRIVER_OK;
 }
 
 static int32_t ARM_USARTx_PowerControl(UARTx_Resources* uart_dev,
                                        ARM_POWER_STATE state)
 {
-    ARG_UNUSED(uart_dev);
+    if (uart_dev == NULL) {
+        return ARM_DRIVER_ERROR_PARAMETER;
+    }
 
     switch(state)
     {
@@ -98,18 +115,35 @@ static int32_t ARM_USARTx_PowerControl(UARTx_Resources* uart_dev,
         case ARM_POWER_LOW:
             return ARM_DRIVER_ERROR_UNSUPPORTED;
         case ARM_POWER_FULL:
-            /* Nothing to be done */
+#if defined(__M3351_H__) && (!defined(DOMAIN_NS) || (DOMAIN_NS == 0))
+            if((uart_dev->dev == UART0) || (uart_dev->dev == UART0_NS))
+            {
+                CLK->CLKDIV0 = (CLK->CLKDIV0 & ~(CLK_CLKDIV0_UART0DIV_Msk)) | ((uint32_t)0x0U << CLK_CLKDIV0_UART0DIV_Pos);
+                CLK->CLKSEL1 = (CLK->CLKSEL1 & ~CLK_CLKSEL1_UART0SEL_Msk) | CLK_CLKSEL1_UART0SEL_HIRC;
+                CLK->APBCLK0 |= CLK_APBCLK0_UART0CKEN_Msk;
+            }
+
+            if((uart_dev->dev == UART1) || (uart_dev->dev == UART1_NS))
+            {
+                CLK->CLKDIV0 = (CLK->CLKDIV0 & ~(CLK_CLKDIV0_UART1DIV_Msk)) | ((uint32_t)0x0U << CLK_CLKDIV0_UART1DIV_Pos);
+                CLK->CLKSEL1 = (CLK->CLKSEL1 & ~CLK_CLKSEL1_UART1SEL_Msk) | CLK_CLKSEL1_UART1SEL_HIRC;
+                CLK->APBCLK0 |= CLK_APBCLK0_UART1CKEN_Msk;
+            }
+#endif
             return ARM_DRIVER_OK;
             /* default:  The default is not defined intentionally to force the
              *           compiler to check that all the enumeration values are
              *           covered in the switch.*/
     }
+
+    return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
 static int32_t ARM_USARTx_Send(UARTx_Resources* uart_dev, const void *data,
                                uint32_t num)
 {
     const uint8_t* p_data = (const uint8_t*)data;
+    static uint8_t prev_ch = 0;
 
     if((data == NULL) || (num == 0U))
     {
@@ -122,6 +156,12 @@ static int32_t ARM_USARTx_Send(UARTx_Resources* uart_dev, const void *data,
 
     while(uart_dev->tx_nbr_bytes != num)
     {
+        if((*p_data == '\n') && (prev_ch != '\r'))
+        {
+            while(uart_dev->dev->FIFOSTS & UART_FIFOSTS_TXFULL_Msk);
+            uart_dev->dev->DAT = '\r';
+        }
+
         /* Waits until UART is ready to transmit */
         while(uart_dev->dev->FIFOSTS & UART_FIFOSTS_TXFULL_Msk);
 
@@ -129,6 +169,7 @@ static int32_t ARM_USARTx_Send(UARTx_Resources* uart_dev, const void *data,
          * not return any transmit error */
         uart_dev->dev->DAT = *p_data;
 
+        prev_ch = *p_data;
         uart_dev->tx_nbr_bytes++;
         p_data++;
     }
@@ -182,16 +223,21 @@ static uint32_t ARM_USARTx_GetRxCount(UARTx_Resources* uart_dev)
 static int32_t ARM_USARTx_Control(UARTx_Resources* uart_dev, uint32_t control,
                                   uint32_t arg)
 {
-    switch(control & ARM_USART_CONTROL_Msk)
+    if (uart_dev == NULL) {
+        return ARM_DRIVER_ERROR_PARAMETER;
+    }
+
+    uint32_t operation = control & ARM_USART_CONTROL_Msk;
+
+    switch(operation)
     {
         case ARM_USART_MODE_ASYNCHRONOUS:
-            uart_dev->dev->LINE = UART_PARITY_NONE | UART_STOP_BIT_1 | UART_WORD_LEN_8;
-            uart_dev->dev->BAUD = UART_BAUD_MODE2 | UART_BAUD_MODE2_DIVIDER(__HIRC, arg);
-
-            /* avoid noise in reset state */
+            UART_Open(uart_dev->dev, arg);
             uart_dev->dev->DAT = '\r';
-
-            break;
+            return ARM_DRIVER_OK;
+        case ARM_USART_CONTROL_TX:
+        case ARM_USART_CONTROL_RX:
+            return ARM_DRIVER_OK;
         /* Unsupported command */
         default:
             return ARM_DRIVER_ERROR_UNSUPPORTED;
