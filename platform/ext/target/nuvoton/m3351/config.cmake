@@ -24,3 +24,9 @@ set(PLATFORM_DEFAULT_PROVISIONING     OFF)
 set(CRYPTO_HW_ACCELERATOR             OFF CACHE BOOL      "Whether to enable legacy crypto hardware accelerator" FORCE)
 set(M3351_CRYPTO_HW_ACCELERATOR       ON  CACHE BOOL      "Whether to enable M3351 crypto hardware acceleration")
 set(TFM_TF_PSA_CRYPTO_PLATFORM_EXTRA_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/accelerator/tf_psa_crypto_extra_config.h CACHE PATH "Config to append to standard TF-PSA-Crypto config")
+
+# Firmware Update Partition
+set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT ON  CACHE BOOL   "Whether the platform has firmware update support")
+set(TFM_PARTITION_FIRMWARE_UPDATE        ON  CACHE BOOL   "Enable firmware update partition")
+set(MCUBOOT_DATA_SHARING                 ON  CACHE BOOL   "Enable Data Sharing")
+

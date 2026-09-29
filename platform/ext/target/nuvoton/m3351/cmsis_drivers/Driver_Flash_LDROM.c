@@ -57,6 +57,7 @@ static int32_t ARM_Flash_LDROM_Initialize(ARM_Flash_SignalEvent_t cb_event)
 {
     (void)cb_event;
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_LD_UPDATE();
 
@@ -101,6 +102,7 @@ static int32_t ARM_Flash_LDROM_ProgramData(uint32_t addr, const void *data,
         return ARM_DRIVER_ERROR_PARAMETER;
     }
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_LD_UPDATE();
     FMC->ISPSTS |= FMC_ISPSTS_ISPFF_Msk;
@@ -127,6 +129,7 @@ static int32_t ARM_Flash_LDROM_EraseSector(uint32_t addr)
         return ARM_DRIVER_ERROR_PARAMETER;
     }
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_LD_UPDATE();
     FMC->ISPSTS |= FMC_ISPSTS_ISPFF_Msk;
@@ -140,6 +143,10 @@ static int32_t ARM_Flash_LDROM_EraseSector(uint32_t addr)
 static int32_t ARM_Flash_LDROM_EraseChip(void)
 {
     uint32_t addr;
+
+    SYS_UnlockReg();
+    FMC_Open();
+    FMC_ENABLE_LD_UPDATE();
 
     for (addr = 0; addr < FMC_LDROM_SIZE; addr += flash_info.sector_size) {
         FMC_Erase(FMC_LDROM_BASE + addr);
