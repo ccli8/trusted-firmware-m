@@ -66,6 +66,7 @@ target_sources(platform_s
     PRIVATE
         device/source/system_core_init.c
         cmsis_drivers/Driver_Flash.c
+        cmsis_drivers/Driver_Flash_LDROM.c
         cmsis_drivers/Driver_Flash_DFMC.c
         ../common/cmsis_drivers/Driver_USART.c
         ../common/native_drivers/arm_uart_drv.c
