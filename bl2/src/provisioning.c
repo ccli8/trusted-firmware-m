@@ -12,6 +12,7 @@
 #include "tfm_attest_hal.h"
 #include "psa/crypto.h"
 #include "bootutil/bootutil_log.h"
+#include <stddef.h>
 
 #include <string.h>
 
@@ -313,16 +314,15 @@ enum tfm_plat_err_t tfm_plat_provisioning_is_required(bool *provisioning_require
 enum tfm_plat_err_t provision_assembly_and_test(void)
 {
     enum tfm_plat_err_t err;
-
     err = tfm_plat_otp_write(PLAT_OTP_ID_BL2_ROTPK_0,
-                             sizeof(bl2_assembly_and_test_prov_data.bl2_rotpk_0),
-                             bl2_assembly_and_test_prov_data.bl2_rotpk_0);
+                            sizeof(bl2_assembly_and_test_prov_data.bl2_rotpk_0),
+                            bl2_assembly_and_test_prov_data.bl2_rotpk_0);
     if ((err != TFM_PLAT_ERR_SUCCESS) && (err != TFM_PLAT_ERR_UNSUPPORTED)) {
         return err;
     }
     err = tfm_plat_otp_write(PLAT_OTP_ID_BL2_ROTPK_1,
-                             sizeof(bl2_assembly_and_test_prov_data.bl2_rotpk_1),
-                             bl2_assembly_and_test_prov_data.bl2_rotpk_1);
+                            sizeof(bl2_assembly_and_test_prov_data.bl2_rotpk_1),
+                            bl2_assembly_and_test_prov_data.bl2_rotpk_1);
     if ((err != TFM_PLAT_ERR_SUCCESS) && (err != TFM_PLAT_ERR_UNSUPPORTED)) {
         return err;
     }
@@ -385,7 +385,8 @@ enum tfm_plat_err_t tfm_plat_provisioning_perform(void)
                  "\033[0m");
 #endif /* TFM_DUMMY_PROVISIONING */
 
-    if (lcs == PLAT_OTP_LCS_ASSEMBLY_AND_TEST) {
+    if (lcs == PLAT_OTP_LCS_ASSEMBLY_AND_TEST ||
+        lcs == PLAT_OTP_LCS_PSA_ROT_PROVISIONING) {
         if (bl2_assembly_and_test_prov_data.magic != ASSEMBLY_AND_TEST_PROV_DATA_MAGIC) {
             BOOT_LOG_ERR("No valid ASSEMBLY_AND_TEST provisioning data found");
             return TFM_PLAT_ERR_INVALID_INPUT;

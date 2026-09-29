@@ -18,7 +18,19 @@ def get_compile_command(compile_commands_file, c_file):
     with open(compile_commands_file, "rt") as f:
         compile_commands = json.load(f)
 
-    return [x['command'] for x in compile_commands if c_file in x['file']][0]
+    normalized_c_file = os.path.normcase(os.path.basename(c_file))
+    for entry in compile_commands:
+        entry_file = entry.get("file", "")
+        entry_output = entry.get("output", "")
+        if normalized_c_file and (
+            normalized_c_file in os.path.normcase(os.path.basename(entry_file)) or
+            normalized_c_file in os.path.normcase(os.path.basename(entry_output)) or
+            c_file in entry_file or
+            c_file in entry_output
+        ):
+            return entry["command"]
+
+    raise IndexError(f"Could not find compile command for '{c_file}' in {compile_commands_file}")
 
 def get_includes(compile_commands_file, c_file):
     compile_command = get_compile_command(compile_commands_file, c_file).split()
