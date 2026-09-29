@@ -1,0 +1,40 @@
+{
+    "prefix": "m3351",
+    "type": "transparent",
+    "mbedtls/h_condition": "defined(PSA_CRYPTO_DRIVER_M3351)",
+    "headers": ["m3351_crypto_driver.h"],
+    "capabilities": [
+        {
+            "mbedtls/c_condition": "defined(PSA_CRYPTO_DRIVER_M3351)",
+            "entry_points": [
+                "hash_compute",
+                "hash_setup",
+                "hash_clone",
+                "hash_update",
+                "hash_finish",
+                "hash_abort",
+                "cipher_encrypt",
+                "cipher_decrypt",
+                "cipher_encrypt_setup",
+                "cipher_decrypt_setup",
+                "cipher_set_iv",
+                "cipher_update",
+                "cipher_finish",
+                "cipher_abort"
+            ],
+            "algorithms": [
+                "PSA_ALG_SHA_256",
+                "PSA_ALG_SHA_224",
+                "PSA_ALG_ECB_NO_PADDING",
+                "PSA_ALG_CBC_NO_PADDING",
+                "PSA_ALG_CBC_PKCS7",
+                "PSA_ALG_CTR"
+            ],
+            "key_types": [
+                "PSA_KEY_TYPE_AES"
+            ],
+            "key_sizes": [128, 192, 256],
+            "fallback": false
+        }
+    ]
+}

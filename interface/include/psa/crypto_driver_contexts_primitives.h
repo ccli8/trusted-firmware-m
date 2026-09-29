@@ -35,6 +35,10 @@
 #include "cc3xx_crypto_primitives_private.h"
 #endif /* PSA_CRYPTO_DRIVER_CC3XX */
 
+#if defined(PSA_CRYPTO_DRIVER_M3351)
+#include "m3351_crypto_primitives.h"
+#endif /* PSA_CRYPTO_DRIVER_M3351 */
+
 #if defined(MBEDTLS_TEST_LIBTESTDRIVER1)
 #if defined(TF_PSA_CRYPTO_TEST_LIBTESTDRIVER1)
 #include "mbedtls/private/libtestdriver1-crypto_builtin_primitives.h"
@@ -119,6 +123,9 @@ typedef union {
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
     cc3xx_hash_operation_t cc3xx_driver_ctx;
 #endif
+#if defined(PSA_CRYPTO_DRIVER_M3351)
+    m3351_hash_operation_t m3351_driver_ctx;
+#endif
 } psa_driver_hash_context_t;
 
 typedef union {
@@ -138,6 +145,9 @@ typedef union {
 #endif
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
     cc3xx_cipher_operation_t cc3xx_driver_ctx;
+#endif
+#if defined(PSA_CRYPTO_DRIVER_M3351)
+    m3351_cipher_operation_t m3351_driver_ctx;
 #endif
 } psa_driver_cipher_context_t;
 
