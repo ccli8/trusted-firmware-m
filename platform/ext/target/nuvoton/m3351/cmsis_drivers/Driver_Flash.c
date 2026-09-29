@@ -160,10 +160,10 @@ static int32_t ARM_Flash_Initialize(ARM_Flash_SignalEvent_t cb_event)
         return ARM_DRIVER_ERROR;
     }
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();
     FMC_ENABLE_LD_UPDATE();
-
 
     return ARM_DRIVER_OK;
 }
@@ -233,6 +233,7 @@ static int32_t ARM_Flash_ProgramData(uint32_t addr, const void *data, uint32_t c
         return ARM_DRIVER_ERROR_PARAMETER;
     }
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();
     FMC->ISPSTS |= FMC_ISPSTS_ISPFF_Msk;
@@ -277,6 +278,7 @@ static int32_t ARM_Flash_EraseSector(uint32_t addr)
         return ARM_DRIVER_ERROR_PARAMETER;
     }
 
+    SYS_UnlockReg();
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();
     FMC->ISPSTS |= FMC_ISPSTS_ISPFF_Msk;
@@ -298,6 +300,9 @@ static int32_t ARM_Flash_EraseChip(void)
     /* Check driver capability erase_chip bit */
     if(DriverCapabilities.erase_chip == 1)
     {
+        SYS_UnlockReg();
+        FMC_Open();
+        FMC_ENABLE_AP_UPDATE();
         for(i = 0; i < FLASH0_DEV->data->sector_count; i++)
         {
             FMC_Erase(addr);
