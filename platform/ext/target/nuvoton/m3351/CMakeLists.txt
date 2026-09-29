@@ -118,6 +118,7 @@ if(BL2)
     target_sources(platform_bl2
         PRIVATE
             device/source/system_core_init.c
+            boot_hal_bl2.c
             cmsis_drivers/Driver_Flash.c
             cmsis_drivers/Driver_Flash_LDROM.c
             cmsis_drivers/Driver_Flash_DFMC.c
@@ -125,6 +126,7 @@ if(BL2)
             ../common/cmsis_drivers/Driver_USART.c
             ../common/retarget/platform_retarget_dev.c
             bsp/Library/StdDriver/src/clk.c
+            bsp/Library/StdDriver/src/sys.c
             bsp/Library/StdDriver/src/fmc.c
             bsp/Library/StdDriver/src/dfmc.c
             bsp/Library/StdDriver/src/uart.c
@@ -147,6 +149,99 @@ if(BL2)
             ${PLATFORM_DIR}/..
             ../common/native_drivers
     )
+endif()
+
+#========================= Platform Provisioning ==============================#
+
+if(NOT PLATFORM_DEFAULT_PROVISIONING)
+    target_sources(platform_s
+        PRIVATE
+            ${PLATFORM_DIR}/ext/common/provisioning_bundle/runtime_stub_provisioning.c
+    )
+    if(BL2)
+        target_sources(platform_bl2
+            PRIVATE
+                ${PLATFORM_DIR}/ext/common/provisioning_bundle/runtime_stub_provisioning.c
+        )
+    endif()
+endif()
+
+#========================= Platform Crypto Keys ===============================#
+
+if(TFM_PARTITION_CRYPTO)
+    target_sources(platform_crypto_keys
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/crypto_keys.c
+    )
+    target_include_directories(platform_crypto_keys
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    target_compile_definitions(platform_crypto_keys
+        PRIVATE
+            $<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
+    )
+    target_link_libraries(platform_crypto_keys
+        PRIVATE
+            platform_s
+    )
+endif()
+
+#========================= Crypto Hardware Accelerator ========================#
+
+if(M3351_CRYPTO_HW_ACCELERATOR)
+    target_sources(platform_s
+        PRIVATE
+            accelerator/m3351_crypto_native.c
+            accelerator/m3351_crypto_hash.c
+            accelerator/m3351_crypto_cipher.c
+    )
+    target_include_directories(platform_s
+        PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/accelerator
+    )
+    target_include_directories(tfm_config
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/accelerator>
+    )
+    target_compile_definitions(platform_s
+        PUBLIC
+            PSA_CRYPTO_DRIVER_M3351
+    )
+
+    if(BL2)
+        target_sources(platform_bl2
+            PRIVATE
+                accelerator/m3351_crypto_native.c
+                accelerator/m3351_crypto_hash.c
+                accelerator/m3351_crypto_cipher.c
+        )
+        target_include_directories(platform_bl2
+            PUBLIC
+                ${CMAKE_CURRENT_SOURCE_DIR}/accelerator
+        )
+        target_compile_definitions(platform_bl2
+            PUBLIC
+                CRYPTO_HW_ACCELERATOR
+                PSA_CRYPTO_DRIVER_M3351
+                MCUBOOT_HASH_STORAGE_DIRECTLY
+        )
+        target_compile_definitions(bootutil
+            PRIVATE
+                MCUBOOT_HASH_STORAGE_DIRECTLY
+        )
+        target_compile_definitions(bl2_crypto_config
+            INTERFACE
+                CRYPTO_HW_ACCELERATOR
+                PSA_CRYPTO_DRIVER_M3351
+                MCUBOOT_HASH_STORAGE_DIRECTLY
+                TF_PSA_CRYPTO_ACCELERATOR_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/accelerator/tf_psa_crypto_extra_config.h"
+        )
+        target_include_directories(bl2_crypto_config
+            INTERFACE
+                ${CMAKE_CURRENT_SOURCE_DIR}/accelerator
+        )
+    endif()
 endif()
 
 #========================= tfm_spm ============================================#
@@ -232,3 +327,7 @@ install(FILES       ${TARGET_PLATFORM_PATH}/device/source/gcc/m3351_ns.ld
 # Install test configs
 install(DIRECTORY   ${TARGET_PLATFORM_PATH}/tests
         DESTINATION ${INSTALL_PLATFORM_NS_DIR})
+
+install(FILES       ${TARGET_PLATFORM_PATH}/tfm_builtin_key_ids.h
+        DESTINATION ${INSTALL_INTERFACE_INC_DIR})
+

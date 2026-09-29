@@ -87,11 +87,17 @@
 #define S_CODE_SIZE     (IMAGE_S_CODE_SIZE)
 #define S_CODE_LIMIT    (S_CODE_START + S_CODE_SIZE - 1)
 
-#define S_DATA_START    (S_RAM_ALIAS(0x0))
+/* MKROM Mailbox definitions (retained in Secure SRAM) */
+#define SBR_CFG_SRAM_BASE                 (S_RAM_ALIAS_BASE)                 /* 0x20000000 */
+#define SBR_CDI_SRAM_BASE                 (SBR_CFG_SRAM_BASE + 0x20)         /* 0x20000020 */
+#define SBR_HUK_SRAM_BASE                 (SBR_CFG_SRAM_BASE + 0x20)         /* 0x20000020 */
+#define SBR_SRAM_MAILBOX_SIZE             (0x40)                             /* 64 Bytes reserved */
+
+#define S_DATA_START    (S_RAM_ALIAS(SBR_SRAM_MAILBOX_SIZE))
 #ifdef SCU_SECURE_SRAM_SIZE
-#define S_DATA_SIZE     (SCU_SECURE_SRAM_SIZE)
+#define S_DATA_SIZE     (SCU_SECURE_SRAM_SIZE - SBR_SRAM_MAILBOX_SIZE)
 #else
-#define S_DATA_SIZE     (64 * 1024)
+#define S_DATA_SIZE     (64 * 1024 - SBR_SRAM_MAILBOX_SIZE)
 #endif
 #define S_DATA_LIMIT    (S_DATA_START + S_DATA_SIZE - 1)
 
@@ -108,9 +114,9 @@
 #ifdef NON_SECURE_SRAM_BASE
 #define NS_DATA_START   (NON_SECURE_SRAM_BASE)
 #else
-#define NS_DATA_START   (NS_RAM_ALIAS(S_DATA_SIZE))
+#define NS_DATA_START   (NS_RAM_ALIAS(S_DATA_SIZE + SBR_SRAM_MAILBOX_SIZE))
 #endif
-#define NS_DATA_SIZE    (TOTAL_RAM_SIZE - S_DATA_SIZE)
+#define NS_DATA_SIZE    (TOTAL_RAM_SIZE - (S_DATA_SIZE + SBR_SRAM_MAILBOX_SIZE))
 #define NS_DATA_LIMIT   (NS_DATA_START + NS_DATA_SIZE - 1)
 
 /* NS partition information is used for MPC and SAU configuration */
@@ -130,17 +136,17 @@
 #define BL2_CODE_SIZE     (FLASH_AREA_BL2_SIZE)
 #define BL2_CODE_LIMIT    (BL2_CODE_START + BL2_CODE_SIZE - 1)
 
-#define BL2_DATA_START    (S_RAM_ALIAS(0x0))
-#define BL2_DATA_SIZE     (TOTAL_RAM_SIZE)
+#define BL2_DATA_START    (S_RAM_ALIAS(SBR_SRAM_MAILBOX_SIZE))
+#define BL2_DATA_SIZE     (TOTAL_RAM_SIZE - SBR_SRAM_MAILBOX_SIZE)
 #define BL2_DATA_LIMIT    (BL2_DATA_START + BL2_DATA_SIZE - 1)
 #endif /* BL2 */
 
 /* Shared data area between bootloader and runtime firmware.
- * Shared data area is allocated at the beginning of the RAM, it is overlapping
+ * Shared data area is allocated after the MKROM mailbox, it is overlapping
  * with TF-M Secure code's MSP stack
  */
-#define BOOT_TFM_SHARED_DATA_BASE S_RAM_ALIAS_BASE
-#define BOOT_TFM_SHARED_DATA_SIZE (0x400)
+#define BOOT_TFM_SHARED_DATA_BASE S_DATA_START
+#define BOOT_TFM_SHARED_DATA_SIZE (0x400 - SBR_SRAM_MAILBOX_SIZE)
 #define BOOT_TFM_SHARED_DATA_LIMIT (BOOT_TFM_SHARED_DATA_BASE + BOOT_TFM_SHARED_DATA_SIZE - 1)
 #define SHARED_BOOT_MEASUREMENT_BASE BOOT_TFM_SHARED_DATA_BASE
 #define SHARED_BOOT_MEASUREMENT_SIZE BOOT_TFM_SHARED_DATA_SIZE

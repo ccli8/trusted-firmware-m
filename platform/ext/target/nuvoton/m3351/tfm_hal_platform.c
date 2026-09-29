@@ -11,6 +11,7 @@
 #include "tfm_plat_defs.h"
 #include "uart_stdout.h"
 #include "rng.h"
+#include "clk.h"
 
 #define BOOT_SEED_SIZE 32
 uint8_t g_boot_seed[BOOT_SEED_SIZE];
@@ -48,6 +49,9 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
     if (plat_err != TFM_PLAT_ERR_SUCCESS) {
         return TFM_HAL_ERROR_GENERIC;
     }
+
+    CLK_EnableModuleClock(CRPT_MODULE);
+    CLK_EnableModuleClock(TRNG_MODULE);
 
     if (RNG_Open() != 0 || RNG_Random((uint32_t *)g_boot_seed, 8) != 8) {
         return TFM_HAL_ERROR_GENERIC;
