@@ -251,6 +251,7 @@ if(BL2 AND PLATFORM_DEFAULT_IMAGE_SIGNING)
     endif()
 
     install(FILES $<TARGET_OBJECTS:signing_layout_s>
+            RENAME signing_layout_s.o
             DESTINATION ${INSTALL_IMAGE_SIGNING_DIR}/layout_files)
     install(FILES ${MCUBOOT_KEY_S}
             RENAME image_s_signing_private_key.pem
@@ -263,6 +264,7 @@ if(BL2 AND PLATFORM_DEFAULT_IMAGE_SIGNING)
 
     if(MCUBOOT_IMAGE_NUMBER GREATER 1 OR MCUBOOT_IMAGE_MULTI_SIG_SUPPORT)
         install(FILES $<TARGET_OBJECTS:signing_layout_ns>
+                RENAME signing_layout_ns.o
                 DESTINATION ${INSTALL_IMAGE_SIGNING_DIR}/layout_files)
         install(FILES ${MCUBOOT_KEY_NS}
                 RENAME image_ns_signing_private_key.pem
@@ -283,6 +285,7 @@ endif()
 ######################### Export common configurations #########################
 
 install(FILES       ${CMAKE_SOURCE_DIR}/config/cp_check.cmake
+                    ${CMAKE_SOURCE_DIR}/config/cp_config_default.cmake
         DESTINATION ${INSTALL_CONFIG_DIR})
 
 ################### Read recommended tf-m-tests version ########################
