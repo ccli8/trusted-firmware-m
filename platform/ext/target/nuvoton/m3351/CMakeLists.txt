@@ -82,6 +82,8 @@ target_sources(platform_s
         bsp/Library/StdDriver/src/dfmc.c
         bsp/Library/StdDriver/src/rng.c
         services/src/tfm_platform_system.c
+        services/src/tfm_platform_hal_ioctl.c
+        services/src/tfm_platform_secure_guard.c
         uart_stdout.c
         nv_counters.c
         attest_hal.c
@@ -94,6 +96,8 @@ target_compile_options(platform_s
 )
 
 target_compile_definitions(platform_s
+    PUBLIC
+        $<$<OR:$<BOOL:${TFM_S_REG_TEST}>,$<BOOL:${TFM_NS_REG_TEST}>>:TFM_NVT_REG_TEST>
     PRIVATE
         TFM_OTP_SHARED_BL2_LAYOUT
 )
@@ -167,6 +171,19 @@ if(NOT PLATFORM_DEFAULT_PROVISIONING)
     endif()
 endif()
 
+if(PLATFORM_DEFAULT_PROVISIONING AND TFM_DUMMY_PROVISIONING)
+    target_compile_definitions(platform_s
+        PRIVATE
+            TFM_NVT_INIT_NSCBA
+    )
+    if(BL2)
+        target_compile_definitions(platform_bl2
+            PRIVATE
+                TFM_NVT_INIT_NSCBA
+        )
+    endif()
+endif()
+
 #========================= Platform Crypto Keys ===============================#
 
 if(TFM_PARTITION_CRYPTO)
@@ -225,17 +242,17 @@ if(M3351_CRYPTO_HW_ACCELERATOR)
             PUBLIC
                 CRYPTO_HW_ACCELERATOR
                 PSA_CRYPTO_DRIVER_M3351
-                MCUBOOT_HASH_STORAGE_DIRECTLY
+                #MCUBOOT_HASH_STORAGE_DIRECTLY
         )
         target_compile_definitions(bootutil
             PRIVATE
-                MCUBOOT_HASH_STORAGE_DIRECTLY
+                #MCUBOOT_HASH_STORAGE_DIRECTLY
         )
         target_compile_definitions(bl2_crypto_config
             INTERFACE
                 CRYPTO_HW_ACCELERATOR
                 PSA_CRYPTO_DRIVER_M3351
-                MCUBOOT_HASH_STORAGE_DIRECTLY
+                #MCUBOOT_HASH_STORAGE_DIRECTLY
                 TF_PSA_CRYPTO_ACCELERATOR_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/accelerator/tf_psa_crypto_extra_config.h"
         )
         target_include_directories(bl2_crypto_config
@@ -265,6 +282,7 @@ if(NS)
     target_sources(platform_ns
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_m3351.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/services/src/tfm_platform_hal_ioctl_api.c
     )
     target_add_scatter_file(platform_ns
         $<$<C_COMPILER_ID:ARMClang>:${CMAKE_CURRENT_SOURCE_DIR}/device/source/armclang/m3351_ns.sct>
@@ -332,3 +350,8 @@ install(DIRECTORY   ${TARGET_PLATFORM_PATH}/tests
 install(FILES       ${TARGET_PLATFORM_PATH}/tfm_builtin_key_ids.h
         DESTINATION ${INSTALL_INTERFACE_INC_DIR})
 
+# Install Platform IOCTL
+install(FILES       ${TARGET_PLATFORM_PATH}/services/include/tfm_platform_hal_ioctl_api.h
+        DESTINATION ${INSTALL_INTERFACE_INC_DIR})
+install(FILES       ${TARGET_PLATFORM_PATH}/services/src/tfm_platform_hal_ioctl_api.c
+        DESTINATION ${INSTALL_INTERFACE_SRC_DIR})
