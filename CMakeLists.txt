@@ -7,11 +7,17 @@
 
 cmake_minimum_required(VERSION 3.21)
 
+# On Zephyr, the TF-M integration build system requires the paths of
+# signing layout files (signing_layout_s.o/signing_layout_ns.o) should
+# not be hashed (CMAKE_INTERMEDIATE_DIR_STRATEGY=FULL). See:
+# https://github.com/zephyrproject-rtos/zephyr/blob/2a30fddadb2e5dcb11fd3f0c8cca95110c38552d/modules/trusted-firmware-m/CMakeLists.txt#L505-L507
+#[[
 # This workaround is for long paths in TF-M under Windows issues.
 if(WIN32 AND CMAKE_VERSION VERSION_GREATER_EQUAL "VERSION 4.2.1")
     set(CMAKE_INTERMEDIATE_DIR_STRATEGY "SHORT"  CACHE STRING
         "Strategy for target intermediate directories.")
 endif()
+]]
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
