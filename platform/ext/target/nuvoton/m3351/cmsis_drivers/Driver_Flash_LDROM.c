@@ -119,6 +119,8 @@ static int32_t ARM_Flash_LDROM_ProgramData(uint32_t addr, const void *data,
         }
     }
 
+    CACHE_Flush();
+
     return cnt;
 }
 
@@ -137,6 +139,7 @@ static int32_t ARM_Flash_LDROM_EraseSector(uint32_t addr)
     if (FMC_Erase(FMC_LDROM_BASE + addr) != FMC_OK) {
         return ARM_DRIVER_ERROR;
     }
+    CACHE_Flush();
     return ARM_DRIVER_OK;
 }
 

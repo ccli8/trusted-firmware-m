@@ -444,6 +444,7 @@ extern "C" {
 #define PWM0_NS                   ((PWM_T *)      (PWM0_BASE      + NS_OFFSET))
 #define PWM1_NS                   ((PWM_T *)      (PWM1_BASE      + NS_OFFSET))
 #define QSPI0_NS                  ((QSPI_T *)     (QSPI0_BASE     + NS_OFFSET))
+#define RTC_NS                    ((RTC_T *)      (RTC_BASE       + NS_OFFSET))
 
 #define SCU_NS                    ((SCU_T *)      (SCU_BASE       + NS_OFFSET))
 #define SPI0_NS                   ((SPI_T *)      (SPI0_BASE      + NS_OFFSET))
