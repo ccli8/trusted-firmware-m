@@ -112,21 +112,31 @@ const struct mpu_armv8m_region_cfg_t region_cfg[] = {
         MPU_ARMV8M_AP_RO_PRIV_UNPRIV,
         MPU_ARMV8M_SH_NONE
     },
-    /* TFM Core unprivileged and partition code region */
+    /* TFM Core unprivileged code region */
     {
         0, /* will be updated before using */
         (uint32_t)&REGION_NAME(Image$$, TFM_UNPRIV_CODE_START, $$RO$$Base),
-        (uint32_t)(S_CODE_LIMIT + 1),
+        (uint32_t)&REGION_NAME(Image$$, TFM_UNPRIV_CODE_END, $$RO$$Limit),
         MPU_ARMV8M_MAIR_ATTR_CODE_IDX,
         MPU_ARMV8M_XN_EXEC_OK,
         MPU_ARMV8M_AP_RO_PRIV_UNPRIV,
         MPU_ARMV8M_SH_NONE
     },
-    /* RW, ZI and stack as one region - covering all Secure SRAM */
+    /* TFM unprivileged partition code region */
     {
         0, /* will be updated before using */
-        (uint32_t)S_DATA_START,
-        (uint32_t)(S_DATA_LIMIT + 1),
+        (uint32_t)&REGION_NAME(Image$$, TFM_APP_CODE_START, $$Base),
+        (uint32_t)&REGION_NAME(Image$$, TFM_APP_CODE_END, $$Base),
+        MPU_ARMV8M_MAIR_ATTR_CODE_IDX,
+        MPU_ARMV8M_XN_EXEC_OK,
+        MPU_ARMV8M_AP_RO_PRIV_UNPRIV,
+        MPU_ARMV8M_SH_NONE
+    },
+    /* RW, ZI and stack as one region */
+    {
+        0, /* will be updated before using */
+        (uint32_t)&REGION_NAME(Image$$, TFM_APP_RW_STACK_START, $$Base),
+        (uint32_t)&REGION_NAME(Image$$, TFM_APP_RW_STACK_END, $$Base),
         MPU_ARMV8M_MAIR_ATTR_DATA_IDX,
         MPU_ARMV8M_XN_EXEC_NEVER,
         MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
