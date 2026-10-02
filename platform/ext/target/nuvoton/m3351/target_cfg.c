@@ -300,8 +300,14 @@ enum tfm_plat_err_t system_reset_cfg(void)
     /* Clear SCB_AIRCR_VECTKEY value */
     reg_value &= ~(uint32_t)(SCB_AIRCR_VECTKEY_Msk);
 
+#if defined(TFM_NVT_SYSRESETREQ_S_NS)
+    /* Enable system reset request both to the secure and non-secure worlds */
+    reg_value &= ~SCB_AIRCR_SYSRESETREQS_Msk;
+    reg_value |= (uint32_t)(SCB_AIRCR_WRITE_MASK);
+#else
     /* Enable system reset request only to the secure world */
     reg_value |= (uint32_t)(SCB_AIRCR_WRITE_MASK | SCB_AIRCR_SYSRESETREQS_Msk);
+#endif
 
     SCB->AIRCR = reg_value;
 

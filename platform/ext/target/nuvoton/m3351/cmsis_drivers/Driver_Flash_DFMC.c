@@ -114,6 +114,8 @@ static int32_t ARM_Flash_DFMC_ProgramData(uint32_t addr, const void *data,
         }
     }
 
+    CACHE_Flush();
+
     return cnt;
 }
 
@@ -126,8 +128,12 @@ static int32_t ARM_Flash_DFMC_EraseSector(uint32_t addr)
 
     SYS_UnlockReg();
     DFMC_ENABLE_UPDATE();
-    return DFMC_Erase(DFMC_DATA_FLASH_BASE + addr) == 0 ?
-           ARM_DRIVER_OK : ARM_DRIVER_ERROR;
+    if (DFMC_Erase(DFMC_DATA_FLASH_BASE + addr) == 0) {
+        CACHE_Flush();
+        return ARM_DRIVER_OK;
+    } else {
+        return ARM_DRIVER_ERROR;
+    }
 }
 
 static int32_t ARM_Flash_DFMC_EraseChip(void)
