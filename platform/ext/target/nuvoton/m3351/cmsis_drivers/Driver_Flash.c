@@ -255,11 +255,16 @@ static int32_t ARM_Flash_ProgramData(uint32_t addr, const void *data, uint32_t c
         if (vaddr >= SCU->FNSADDR)
             vaddr += NS_OFFSET;
 
+        /* MCUboot may re-program without re-erase. In this case, programmed
+         * data isn't required to be strictly the same as read back.
+         */
+#if 0
         if (*(volatile const uint32_t *)(vaddr) != u32Data0 ||
             *(volatile const uint32_t *)(vaddr + 4) != u32Data1)
         {
             return ARM_DRIVER_ERROR;
         }
+#endif
     }
 
     return cnt;

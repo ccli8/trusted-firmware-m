@@ -43,3 +43,9 @@ target_include_directories(platform_region_defs
     INTERFACE
         partition
 )
+
+target_compile_definitions(platform_ns
+    PUBLIC
+        # TFM_NS_CRYPTO_TEST_1034 relies on TFM_INTERNAL_TRUSTED_STORAGE_SERVICE
+        $<$<BOOL:${TEST_NS_CRYPTO}>:TFM_INTERNAL_TRUSTED_STORAGE_SERVICE>
+)

@@ -39,6 +39,9 @@ uint32_t SystemCoreClock = __HSI;                /*!< System Clock Frequency (Co
 uint32_t CyclesPerUs     = (__HSI / 1000000UL);  /*!< Cycles per micro second             */
 uint32_t PllClock        = __HSI;                /*!< PLL Output Clock Frequency          */
 
+/* Forward declaration */
+void FMC_NSCBA_Setup(void);
+
 /*----------------------------------------------------------------------------
   System Core Clock update function
  *----------------------------------------------------------------------------*/
@@ -82,6 +85,223 @@ void SystemInit(void)
     SCU_SET_PNSSET(UART0_Attr);
 #endif
 
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+    /* The equivalents are done in target_cfg.c */
+#if 0
+    TZ_SAU_Setup();
+    SCU_Setup();
+#endif
 
+    /* The equivalent should be done in provisioning. Without provisioning,
+     * invoke it for development.
+     */
+#if defined(TFM_NVT_INIT_NSCBA)
+    FMC_NSCBA_Setup();
+#endif
+
+    /* Initialize DFMC for fresh test environment */
+#if defined(TFM_NVT_INIT_DFMC)
+    SYS_UnlockReg();
+    DFMC_Open();
+    DFMC_ENABLE_UPDATE();
+    for (uint32_t addr = DFMC_DATA_FLASH_BASE; addr < DFMC_DATA_FLASH_END; addr += DFMC_FLASH_PAGE_SIZE) {
+        DFMC_Erase(addr);
+    }
+#endif
+
+#if defined(TFM_NVT_REG_TEST)
+    /* For regression test, pre-enable clock here, so that CLK driver
+     * doesn't need to configure for UNPRIV.
+     */
+    CLK_EnableModuleClock(TMR0_MODULE);
+    CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HIRC, 0);
+#endif
+
+#endif
 }
 
+
+#if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+/**
+ * @brief    Setup Non-secure boundary
+ *
+ * @details  This function is used to set Non-secure boundary according to
+ *           the configuration of partition header file
+ */
+void FMC_NSCBA_Setup(void)
+{
+    uint32_t u32TimeOutCnt;
+    uint32_t bForceReset = FALSE;
+    uint32_t bUpdateNSCBA = FALSE;
+
+    /* Skip NSCBA Setup according config */
+#if (FMC_INIT_NSCBA == 0)
+    {
+        return;
+    }
+#endif
+
+    /* Check if NSCBA value with current active NSCBA */
+    bUpdateNSCBA = (SCU->FNSADDR != FMC_SECURE_END) ? TRUE : FALSE;
+
+    if (bUpdateNSCBA == FALSE)
+    {
+        bUpdateNSCBA = ((FMC->ISPSTS & FMC_ISPSTS_MIRBOUND_Msk) != (FMC_INIT_MIRROR_BOUND << FMC_ISPSTS_MIRBOUND_Pos)) ? TRUE : FALSE;
+    }
+
+    if (bUpdateNSCBA != FALSE)
+    {
+        /* Unlock Protected Register */
+        SYS_UnlockReg();
+
+        /* Enable FMC ISP and config update */
+        FMC->ISPCTL = FMC_ISPCTL_ISPEN_Msk | FMC_ISPCTL_CFGUEN_Msk;
+
+        /* Config Base of NSCBA */
+        FMC->ISPADDR = FMC_NSCBA_BASE;
+
+        /* Read Non-secure base address config */
+        FMC->ISPCMD = FMC_ISPCMD_READ;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+        u32TimeOutCnt = FMC_TIMEOUT_READ;
+
+        while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+        {
+            if (u32TimeOutCnt == 0UL)
+            {
+                return ;
+            }
+            u32TimeOutCnt--;
+        }
+
+        /* Setting NSCBA when it is empty */
+        if (FMC->ISPDAT != 0xFFFFFFFFUL)
+        {
+            /* Erase old setting */
+            FMC->ISPCMD = FMC_ISPCMD_CFG_ERASE;
+            FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+            u32TimeOutCnt = FMC_TIMEOUT_ERASE;
+
+            while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+            {
+                if (u32TimeOutCnt == 0UL)
+                {
+                    return ;
+                }
+                u32TimeOutCnt--;
+            }
+        }
+
+        /* Set new base */
+        FMC->ISPDAT = ((uint32_t)(FMC_INIT_MIRROR_BOUND << 31) | FMC_SECURE_END);
+        FMC->ISPCMD = FMC_ISPCMD_PROGRAM;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+        u32TimeOutCnt = FMC_TIMEOUT_WRITE;
+
+        while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+        {
+            if (u32TimeOutCnt == 0UL)
+            {
+                return ;
+            }
+            u32TimeOutCnt--;
+        }
+
+        bForceReset = TRUE;
+    }
+
+    /* Skip NSCBA Setup according config */
+#if (DFMC_INIT_NSCBA == 1) && (DFMC_SECURE_END > DFMC_DATA_FLASH_BASE)
+    uint32_t u32Config14;
+    uint32_t u32DFMC_NSCBAConfig = ((DFMC_SECURE_END - DFMC_DATA_FLASH_BASE) / 0x1000UL) - 1UL;
+
+    /* Check if NSCBA value with current active NSCBA */
+    if ((SCU->DFNSADDR & 0xFUL) != u32DFMC_NSCBAConfig)
+    {
+        uint32_t u32DFMC_EnableEEPROM = BIT5;    /* CONFIG14.DFMC_EE[5]: Data Flash EEPROM Function Enable Bit; 0: Enable, 1: Disable */
+
+#if (DFMC_ENABLE_EEPROM == 1UL)
+        u32DFMC_EnableEEPROM = 0UL;    /* CONFIG14.DFMC_EE[5]: Data Flash EEPROM Function Enable Bit; 0: Enable, 1: Disable */
+#endif
+
+        /* Unlock Protected Register */
+        SYS_UnlockReg();
+
+        /* Enable FMC ISP and config update */
+        FMC->ISPCTL = FMC_ISPCTL_ISPEN_Msk | FMC_ISPCTL_CFGUEN_Msk;
+
+        /* Config Base of NSCBA */
+        FMC->ISPADDR = FMC_USER_CONFIG_14;
+
+        /* Read Non-secure base address config */
+        FMC->ISPCMD = FMC_ISPCMD_READ;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+        u32TimeOutCnt = FMC_TIMEOUT_READ;
+
+        while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+        {
+            if (u32TimeOutCnt == 0UL)
+            {
+                return ;
+            }
+            u32TimeOutCnt--;
+        }
+
+        u32Config14 = FMC->ISPDAT;
+
+        if ((u32Config14 & 0x6FUL) == ((DFMC_SECURE_EEPROM << 6UL) | u32DFMC_EnableEEPROM | u32DFMC_NSCBAConfig))
+        {
+            return ;
+        }
+
+        /* Setting NSCBA when it is empty */
+        if (u32Config14 != 0xFFFFFFFFUL)
+        {
+            /* Erase old setting */
+            FMC->ISPCMD = FMC_ISPCMD_CFG_ERASE;
+            FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+            u32TimeOutCnt = FMC_TIMEOUT_ERASE;
+
+            while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+            {
+                if (u32TimeOutCnt == 0UL)
+                {
+                    return ;
+                }
+                u32TimeOutCnt--;
+            }
+        }
+
+        /* Set new base */
+        FMC->ISPDAT = ~0x6FUL | ((DFMC_SECURE_EEPROM << 6UL) | u32DFMC_EnableEEPROM | u32DFMC_NSCBAConfig);
+        FMC->ISPCMD = FMC_ISPCMD_PROGRAM;
+        FMC->ISPTRG = FMC_ISPTRG_ISPGO_Msk;
+
+        u32TimeOutCnt = FMC_TIMEOUT_WRITE;
+
+        while ((FMC->ISPTRG & FMC_ISPTRG_ISPGO_Msk) != 0UL)
+        {
+            if (u32TimeOutCnt == 0UL)
+            {
+                return ;
+            }
+            u32TimeOutCnt--;
+        }
+
+        bForceReset = TRUE;
+    }
+
+#endif
+
+    if (bForceReset == TRUE)
+    {
+        /* Force Chip Reset to valid new setting */
+        SYS->IPRST0 = SYS_IPRST0_CHIPRST_Msk;
+    }
+}
+#endif /* defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U) */
