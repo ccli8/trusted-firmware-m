@@ -16,9 +16,6 @@
 
 void tfm_plat_test_secure_timer_start(void)
 {
-    CLK_EnableModuleClock(TMR0_MODULE);
-    CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HIRC, 0);
-
     if (!cmsdk_timer_is_initialized(&CMSDK_TIMER0_DEV_S)) {
         cmsdk_timer_init(&CMSDK_TIMER0_DEV_S);
     }
