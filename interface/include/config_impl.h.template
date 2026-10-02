@@ -22,6 +22,17 @@
 #define {{"%-56s"|format("CONFIG_TFM_FLIH_API")}} {{config_impl['CONFIG_TFM_FLIH_API']}}
 #define {{"%-56s"|format("CONFIG_TFM_SLIH_API")}} {{config_impl['CONFIG_TFM_SLIH_API']}}
 
+/*
+ * Guard from invalid config: CONFIG_TFM_SPM_BACKEND_SFN AND
+ * CONFIG_TFM_DOORBELL_API
+ */
+#if CONFIG_TFM_SPM_BACKEND_SFN == 1
+#if defined(CONFIG_TFM_DOORBELL_API) && (CONFIG_TFM_DOORBELL_API == 1)
+#undef CONFIG_TFM_DOORBELL_API
+#define {{"%-56s"|format("CONFIG_TFM_DOORBELL_API")}} 0
+#endif
+#endif
+
 #if CONFIG_TFM_SPM_BACKEND_IPC == 1
 /* Trustzone NS agent working stack size. */
 #if defined(TFM_FIH_PROFILE_ON) && TFM_ISOLATION_LEVEL == 1
